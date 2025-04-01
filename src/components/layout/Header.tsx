@@ -11,13 +11,16 @@ import {
 } from '../../features/ui/uiSlice';
 import { ViewMode, TaskStatus, TaskPriority } from '../../types';
 import HistoryControls from '../common/HistoryControls';
+import { useAuth0 } from '@auth0/auth0-react';
+
 
 
 const Header: React.FC = () => {
   const dispatch = useAppDispatch();
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const filterConfig = useAppSelector(state => state.ui.filterConfig);
-  
+  const { user, logout, isAuthenticated } = useAuth0();
+
   // Handle view mode toggle
   const handleViewModeChange = (mode: ViewMode) => {
     dispatch(setViewMode(mode));
@@ -42,6 +45,11 @@ const Header: React.FC = () => {
   const handlePriorityFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(setFilterPriority(e.target.value as TaskPriority | 'all'));
   };
+
+  // Handle logout
+  const handleLogout = () => {
+    logout({ logoutParams: { returnTo: window.location.origin } });
+  };
   
   return (
     <header className="bg-white shadow">
@@ -56,7 +64,27 @@ const Header: React.FC = () => {
             <HistoryControls />
           </div>
 
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
+            {isAuthenticated && user && (
+                <div className="flex items-center space-x-2">
+                  {user.picture && (
+                    <img 
+                      src={user.picture} 
+                      alt="Profile" 
+                      className="h-8 w-8 rounded-full border border-gray-200"
+                    />
+                  )}
+                  <span className="text-sm text-gray-700">{user.name}</span>
+                  <button 
+                    onClick={handleLogout}
+                    className="text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    Log Out
+                  </button>
+                </div>
+              )}
+
+
             <button
               onClick={handleCreateTask}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

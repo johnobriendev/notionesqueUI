@@ -12,6 +12,8 @@ import TaskDetailView from './components/task/TaskDetailVIew';
 import { closeTaskDetail } from './features/ui/uiSlice';
 import { addTask } from './features/tasks/tasksSlice';
 import { getWelcomeTasks } from './utils/welcomeTasks';
+import AuthLayout from './components/layout/AuthLayout';
+
 
 function App() {
   const dispatch = useAppDispatch();
@@ -39,28 +41,30 @@ function App() {
 
   
   return (
-    <div className="min-h-screen bg-gray-100 ">
-      <Header />
-      
-      <main>
-        <div className="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 ">
-          {viewMode === 'list' ? <ListView /> : <KanbanView />}
-        </div>
-      </main>
-      
-      <TaskModal />
+    <AuthLayout>
+      <div className="min-h-screen bg-gray-100 ">
+        <Header />
+        
+        <main>
+          <div className="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 ">
+            {viewMode === 'list' ? <ListView /> : <KanbanView />}
+          </div>
+        </main>
+        
+        <TaskModal />
 
-      {/* Task Detail View - only rendered when isTaskDetailOpen is true */}
-      {isTaskDetailOpen && taskBeingViewed && (
-        <TaskDetailView 
-          task={taskBeingViewed} 
-          onClose={() => dispatch(closeTaskDetail())} 
-        />
-      )}
+        {/* Task Detail View - only rendered when isTaskDetailOpen is true */}
+        {isTaskDetailOpen && taskBeingViewed && (
+          <TaskDetailView 
+            task={taskBeingViewed} 
+            onClose={() => dispatch(closeTaskDetail())} 
+          />
+        )}
 
-      <DeleteConfirmModal />
-      <BulkEditModal />
-    </div>
+        <DeleteConfirmModal />
+        <BulkEditModal />
+      </div>
+    </AuthLayout>
   );
 }
 
