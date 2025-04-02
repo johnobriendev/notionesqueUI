@@ -5,7 +5,6 @@ import { useAuth0 } from '@auth0/auth0-react';
 const DashboardHeader: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth0();
   
-  // Handle logout
   const handleLogout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } });
   };
@@ -14,12 +13,15 @@ const DashboardHeader: React.FC = () => {
     <header className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Notionesque Dashboard
-          </h1>
+          <div className="flex items-center">
+            <h1 className="text-3xl font-bold text-gray-900">Notionesque</h1>
+          </div>
           
           {isAuthenticated && user && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
+              <div className="text-sm text-gray-700 mr-2">
+                {user.email}
+              </div>
               {user.picture && (
                 <img 
                   src={user.picture} 
@@ -27,10 +29,9 @@ const DashboardHeader: React.FC = () => {
                   className="h-8 w-8 rounded-full border border-gray-200"
                 />
               )}
-              <span className="text-sm text-gray-700">{user.name}</span>
               <button 
                 onClick={handleLogout}
-                className="text-sm text-gray-600 hover:text-gray-900"
+                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
               >
                 Log Out
               </button>

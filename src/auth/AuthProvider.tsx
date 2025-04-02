@@ -44,11 +44,7 @@ const AuthSetup: React.FC<AuthProviderProps> = ({ children }) => {
     if (isAuthenticated) {
       const getToken = async () => {
         try {
-          return await getAccessTokenSilently({
-            authorizationParams: {
-              // You can specify additional params here if needed
-            }
-          });
+          return await getAccessTokenSilently();
         } catch (error) {
           console.error('Error getting access token:', error);
           return undefined;
