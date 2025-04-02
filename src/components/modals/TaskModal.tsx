@@ -2,19 +2,24 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { closeTaskModal } from '../../features/ui/uiSlice';
-import { addTask, updateTask } from '../../features/tasks/tasksSlice';
+import { addTask, updateTask, createTaskAsync, updateTaskAsync } from '../../features/tasks/tasksSlice';
+import { selectCurrentProject } from '../../features/projects/projectsSlice';
 import { Task, TaskStatus, TaskPriority } from '../../types';
+import { useNavigate } from 'react-router-dom';
+
 
 const TaskModal: React.FC = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const isOpen = useAppSelector(state => state.ui.isTaskModalOpen);
   const editingTaskId = useAppSelector(state => state.ui.editingTaskId);
   const tasks = useAppSelector(state => state.tasks.present.items as Task[]);
+  const currentProject = useAppSelector(selectCurrentProject);
+
   
-  // Find the task being edited, if any
-  const taskToEdit = editingTaskId 
-    ? tasks.find(task => task.id === editingTaskId) 
-    : null;
+  // Determine if we're editing an existing task
+  const isEditing = Boolean(editingTaskId);
+  const editingTask = editingTaskId ? tasks.find(task => task.id === editingTaskId) : null;
   
   // Form state
   const [title, setTitle] = useState('');
@@ -22,6 +27,8 @@ const TaskModal: React.FC = () => {
   const [status, setStatus] = useState<TaskStatus>('not started');
   const [priority, setPriority] = useState<TaskPriority>('none');
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // For adding custom fields
   const [showCustomFields, setShowCustomFields] = useState(false);
@@ -31,14 +38,14 @@ const TaskModal: React.FC = () => {
   // Reset form when modal opens/closes or editingTaskId changes
   useEffect(() => {
     if (isOpen) {
-      if (taskToEdit) {
+      if (isEditing && editingTask) {
         // Editing existing task - populate form
-        setTitle(taskToEdit.title);
-        setDescription(taskToEdit.description);
-        setStatus(taskToEdit.status);
-        setPriority(taskToEdit.priority);
-        setCustomFields(taskToEdit.customFields as Record<string, string>);
-        setShowCustomFields(Object.keys(taskToEdit.customFields).length > 0);
+        setTitle(editingTask.title);
+        setDescription(editingTask.description);
+        setStatus(editingTask.status);
+        setPriority(editingTask.priority);
+        setCustomFields(editingTask.customFields as Record<string, string>);
+        setShowCustomFields(Object.keys(editingTask.customFields).length > 0);
       } else {
         // Creating new task - reset form
         setTitle('');
@@ -48,8 +55,9 @@ const TaskModal: React.FC = () => {
         setCustomFields({});
         setShowCustomFields(false);
       }
+      setError(null);
     }
-  }, [isOpen, taskToEdit]);
+  }, [isOpen, isEditing, editingTask]);
   
   // Close the modal
   const handleClose = () => {
@@ -57,36 +65,57 @@ const TaskModal: React.FC = () => {
   };
   
   // Submit the form
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) return; // Validate title
     
-    if (taskToEdit) {
-      // Update existing task
-      dispatch(updateTask({
-        id: taskToEdit.id,
-        updates: {
+    // Ensure we have a current project
+    if (!currentProject?.id) {
+      setError('No project selected. Please select a project first.');
+      // Redirect to dashboard if no project is selected
+      dispatch(closeTaskModal());
+      navigate('/');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      if (isEditing && editingTask) {
+        // Update existing task
+        await dispatch(updateTaskAsync({
+          projectId: editingTask.projectId,
+          taskId: editingTask.id,
+          updates: {
+            title,
+            description,
+            status,
+            priority,
+            customFields
+          }
+        })).unwrap();
+      } else {
+        // Create new task
+        await dispatch(createTaskAsync({
+          projectId: currentProject.id,
           title,
           description,
           status,
           priority,
           customFields
-        }
-      }));
-    } else {
-      // Create new task
-      dispatch(addTask({
-        title,
-        description,
-        status,
-        priority,
-        customFields
-      }));
+        })).unwrap();
+      }
+      
+      // Close the modal on success
+      handleClose();
+    } catch (err) {
+      setError('Failed to save task. Please try again.');
+      console.error('Task save error:', err);
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Close the modal
-    handleClose();
   };
   
   // Add a custom field
@@ -130,8 +159,14 @@ const TaskModal: React.FC = () => {
     >
       <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">
-          {taskToEdit ? 'Edit Task' : 'Create New Task'}
+          {isEditing ? 'Edit Task' : 'Create New Task'}
         </h2>
+
+        {error && (
+          <div className="mb-4 p-2 bg-red-50 text-red-700 rounded border border-red-200">
+            {error}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           {/* Task Title */}
@@ -292,9 +327,14 @@ const TaskModal: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              disabled={isSubmitting || !title.trim()}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                isSubmitting || !title.trim()
+                  ? 'bg-blue-300 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
-              {taskToEdit ? 'Update' : 'Create'}
+              {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Create'}
             </button>
           </div>
         </form>
