@@ -1,55 +1,128 @@
-//src/features/tasks/tasksSlice.ts
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+// src/features/tasks/tasksSlice.ts
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import undoable, { includeAction } from 'redux-undo';
-import { v4 as uuidv4 } from 'uuid';
 import { Task, TaskStatus, TaskPriority } from '../../types';
+import taskService from '../../services/taskService';
 
-// Define the state structure for the tasks slice
+// Define the state structure
 interface TasksState {
-  items: Task[]; // Array of all tasks
+  items: Task[];
+  isLoading: boolean;
+  error: string | null;
 }
 
-// Initial state when the application loads
+// Initial state
 const initialState: TasksState = {
-  items: []
+  items: [],
+  isLoading: false,
+  error: null
 };
 
-// Define payload types
-interface ReorderTasksPayload {
-  priority: TaskPriority;
-  taskIds: string[];
-}
+// Async thunks for API operations
+export const fetchTasks = createAsyncThunk(
+  'tasks/fetchTasks',
+  async (projectId: string, { rejectWithValue }) => {
+    try {
+      return await taskService.getTasks(projectId);
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tasks');
+    }
+  }
+);
 
-// Enhanced payload for updateTaskPriority
-interface UpdateTaskPriorityPayload {
-  id: string;
-  priority: TaskPriority;
-  destinationIndex?: number; // Optional parameter for destination position
-}
+export const createTaskAsync = createAsyncThunk(
+  'tasks/createTask',
+  async (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'position'>, { rejectWithValue }) => {
+    try {
+      return await taskService.createTask({
+        projectId: task.projectId,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority
+      });
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to create task');
+    }
+  }
+);
 
-// Create the slice with reducers
+export const updateTaskAsync = createAsyncThunk(
+  'tasks/updateTask',
+  async (
+    data: { 
+      projectId: string; 
+      taskId: string; 
+      updates: Partial<Omit<Task, 'id' | 'projectId' | 'createdAt' | 'updatedAt'>>
+    }, 
+    { rejectWithValue }
+  ) => {
+    try {
+      return await taskService.updateTask(data.projectId, data.taskId, data.updates);
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update task');
+    }
+  }
+);
+
+export const deleteTaskAsync = createAsyncThunk(
+  'tasks/deleteTask',
+  async (data: { projectId: string; taskId: string }, { rejectWithValue }) => {
+    try {
+      await taskService.deleteTask(data.projectId, data.taskId);
+      return data.taskId;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete task');
+    }
+  }
+);
+
+export const updateTaskPriorityAsync = createAsyncThunk(
+  'tasks/updateTaskPriority',
+  async (
+    data: { 
+      projectId: string; 
+      taskId: string; 
+      priority: TaskPriority; 
+      destinationIndex?: number 
+    }, 
+    { rejectWithValue }
+  ) => {
+    try {
+      return await taskService.updateTaskPriority(
+        data.projectId,
+        data.taskId,
+        data.priority,
+        data.destinationIndex
+      );
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update task priority');
+    }
+  }
+);
+
+// Create the slice
 export const tasksSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
-    // Add a new task
+    // Local reducers for optimistic updates
     addTask: (state, action: PayloadAction<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'position'>>) => {
+      // This is now a temporary action that will be replaced by the async version
       const now = new Date().toISOString();
       
-      // Calculate the next position for the new task based on its priority
       const tasksWithSamePriority = state.items.filter(
         task => task.priority === action.payload.priority
       );
       
-      // If no tasks with this priority, start at position 0, otherwise take the max position + 1
       const position = tasksWithSamePriority.length 
         ? Math.max(...tasksWithSamePriority.map(t => t.position || 0)) + 1 
         : 0;
       
       const newTask: Task = {
         ...action.payload,
-        id: uuidv4(),
-        position, // Set the position field
+        id: crypto.randomUUID(), // Using browser's UUID generation
+        position,
         createdAt: now,
         updatedAt: now
       };
@@ -57,7 +130,6 @@ export const tasksSlice = createSlice({
       state.items.push(newTask);
     },
     
-    // Update an existing task
     updateTask: (state, action: PayloadAction<{ id: string; updates: Partial<Omit<Task, 'id' | 'createdAt'>> }>) => {
       const { id, updates } = action.payload;
       const index = state.items.findIndex(task => task.id === id);
@@ -66,9 +138,7 @@ export const tasksSlice = createSlice({
         const oldPriority = state.items[index].priority;
         const newPriority = updates.priority;
         
-        // If priority changed, handle position updates
         if (newPriority && newPriority !== oldPriority) {
-          // Get the highest position in the new priority group
           const tasksInNewPriority = state.items.filter(t => t.priority === newPriority);
           const newPosition = tasksInNewPriority.length 
             ? Math.max(...tasksInNewPriority.map(t => t.position || 0)) + 1 
@@ -85,46 +155,37 @@ export const tasksSlice = createSlice({
       }
     },
     
-    // Delete a single task
     deleteTask: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(task => task.id !== action.payload);
     },
     
-    // Delete multiple tasks (for bulk actions)
     deleteTasks: (state, action: PayloadAction<string[]>) => {
       state.items = state.items.filter(task => !action.payload.includes(task.id));
     },
     
-    // Enhanced: Update task priority with optional destination index
-    updateTaskPriority: (state, action: PayloadAction<UpdateTaskPriorityPayload>) => {
+    updateTaskPriority: (state, action: PayloadAction<{ id: string; priority: TaskPriority; destinationIndex?: number }>) => {
       const { id, priority, destinationIndex } = action.payload;
       const index = state.items.findIndex(task => task.id === id);
       
       if (index !== -1) {
         const oldPriority = state.items[index].priority;
         
-        // Only proceed if priority actually changed
         if (oldPriority !== priority) {
           let newPosition;
           
-          // Get all tasks in the destination priority column
           const tasksInDestPriority = state.items.filter(t => t.priority === priority);
           
           if (destinationIndex !== undefined && tasksInDestPriority.length > 0) {
-            // Sort tasks by position
             const sortedTasks = [...tasksInDestPriority].sort((a, b) => 
               (a.position || 0) - (b.position || 0)
             );
             
             if (destinationIndex >= sortedTasks.length) {
-              // If dropped at the end, set position after the last task
               const maxPosition = Math.max(...sortedTasks.map(t => t.position || 0));
               newPosition = maxPosition + 1;
             } else {
-              // If dropped in the middle, get the position at the drop point
               const positionAtDrop = sortedTasks[destinationIndex].position || 0;
               
-              // Increment positions of all tasks at or after the drop point
               state.items.forEach(task => {
                 if (
                   task.priority === priority && 
@@ -135,17 +196,14 @@ export const tasksSlice = createSlice({
                 }
               });
               
-              // Set the moved task to the position at the drop point
               newPosition = positionAtDrop;
             }
           } else {
-            // Default: place at the end
             newPosition = tasksInDestPriority.length 
               ? Math.max(...tasksInDestPriority.map(t => t.position || 0)) + 1 
               : 0;
           }
           
-          // Update the task with new priority and position
           state.items[index] = {
             ...state.items[index],
             priority,
@@ -155,55 +213,10 @@ export const tasksSlice = createSlice({
         }
       }
     },
-
-    bulkUpdateTasks: (state, action: PayloadAction<{ 
-      taskIds: string[]; 
-      updates: Partial<Pick<Task, 'status' | 'priority'>> 
-    }>) => {
-      const { taskIds, updates } = action.payload;
-      
-      // If priority is changing, we need to handle positions
-      if (updates.priority) {
-        // Get all tasks in the destination priority
-        const tasksInDestPriority = state.items.filter(t => t.priority === updates.priority);
-        let nextPosition = tasksInDestPriority.length 
-          ? Math.max(...tasksInDestPriority.map(t => t.position || 0)) + 1 
-          : 0;
-          
-        // Update each task one by one to maintain proper positions
-        state.items = state.items.map(task => {
-          if (taskIds.includes(task.id)) {
-            // If priority is changing, assign a new position
-            const needsNewPosition = updates.priority && task.priority !== updates.priority;
-            
-            return {
-              ...task,
-              ...updates,
-              position: needsNewPosition ? nextPosition++ : (task.position || 0),
-              updatedAt: new Date().toISOString()
-            };
-          }
-          return task;
-        });
-      } else {
-        // No priority change, simpler update
-        state.items = state.items.map(task => {
-          if (taskIds.includes(task.id)) {
-            return {
-              ...task,
-              ...updates,
-              updatedAt: new Date().toISOString()
-            };
-          }
-          return task;
-        });
-      }
-    },
-
-    reorderTasks: (state, action: PayloadAction<ReorderTasksPayload>) => {
+    
+    reorderTasks: (state, action: PayloadAction<{ priority: TaskPriority; taskIds: string[] }>) => {
       const { priority, taskIds } = action.payload;
       
-      // Update positions based on the new order
       taskIds.forEach((taskId, index) => {
         const taskIndex = state.items.findIndex(task => task.id === taskId);
         if (taskIndex !== -1) {
@@ -215,6 +228,52 @@ export const tasksSlice = createSlice({
         }
       });
     },
+    
+    clearTasks: (state) => {
+      state.items = [];
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      // fetchTasks
+      .addCase(fetchTasks.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchTasks.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchTasks.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string || 'Failed to fetch tasks';
+      })
+      
+      // createTaskAsync
+      .addCase(createTaskAsync.fulfilled, (state, action) => {
+        state.items.push(action.payload);
+      })
+      
+      // updateTaskAsync
+      .addCase(updateTaskAsync.fulfilled, (state, action) => {
+        const index = state.items.findIndex(task => task.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      
+      // deleteTaskAsync
+      .addCase(deleteTaskAsync.fulfilled, (state, action) => {
+        state.items = state.items.filter(task => task.id !== action.payload);
+      })
+      
+      // updateTaskPriorityAsync
+      .addCase(updateTaskPriorityAsync.fulfilled, (state, action) => {
+        const index = state.items.findIndex(task => task.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      });
   }
 });
 
@@ -226,19 +285,9 @@ const undoableActions = [
   'tasks/deleteTasks',
   'tasks/updateTaskPriority',
   'tasks/reorderTasks',
-  'tasks/bulkUpdateTasks',
 ];
 
-// Wrap the reducer with undoable
-const undoableTasksReducer = undoable(tasksSlice.reducer, {
-  filter: includeAction(undoableActions),
-  limit: 20, // Limit the history to 20 steps
-  debug: true, // Enable debug output
-  syncFilter: true, // Prevent rehydration from creating a history entry
-  clearHistoryType: '@@redux-undo/CLEAR_HISTORY' // Action type to clear history
-});
-
-// Export the actions
+// Export actions
 export const { 
   addTask, 
   updateTask, 
@@ -246,11 +295,21 @@ export const {
   deleteTasks,
   updateTaskPriority,
   reorderTasks,
-  bulkUpdateTasks
+  clearTasks
 } = tasksSlice.actions;
 
-// Export the reducer
+// Create the undoable reducer
+const undoableTasksReducer = undoable(tasksSlice.reducer, {
+  filter: includeAction(undoableActions),
+  limit: 20,
+  debug: false,
+  syncFilter: true,
+  clearHistoryType: '@@redux-undo/CLEAR_HISTORY'
+});
+
 export default undoableTasksReducer;
 
-// Selector to get all tasks
+// Selectors
 export const selectAllTasks = (state: any) => state.tasks.present.items;
+export const selectTasksLoading = (state: any) => state.tasks.present.isLoading;
+export const selectTasksError = (state: any) => state.tasks.present.error;
