@@ -2,7 +2,8 @@
 import React, {useState, useEffect} from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { openTaskModal, setSortConfig, openTaskDetail, openDeleteConfirm, openBulkEdit, selectIsDeleteConfirmOpen } from '../../features/ui/uiSlice';
-import { deleteTask, deleteTasks } from '../../features/tasks/tasksSlice';
+import { deleteTask, deleteTaskAsync, bulkUpdateTasks } from '../../features/tasks/tasksSlice';
+import { selectCurrentProject } from '../../features/projects/projectsSlice';
 import { Task, SortField, SortDirection, TaskStatus, TaskPriority } from '../../types';
 
 const ListView: React.FC = () => {
@@ -11,6 +12,8 @@ const ListView: React.FC = () => {
   const filterConfig = useAppSelector(state => state.ui.filterConfig);
   const sortConfig = useAppSelector(state => state.ui.sortConfig);
   const isDeleteConfirmOpen = useAppSelector(selectIsDeleteConfirmOpen);
+  const currentProject = useAppSelector(selectCurrentProject);
+
 
 
   // State for selected tasks (for bulk actions)
@@ -45,10 +48,15 @@ const ListView: React.FC = () => {
   }, [isDeleteConfirmOpen]);
 
   
-  // Filter and sort tasks based on current configuration
-  const filteredAndSortedTasks = React.useMemo(() => {
+  // Filter and sort tasks based on current configuration and current project
+ const filteredAndSortedTasks = React.useMemo(() => {
     // First, filter the tasks
     let result = tasks.filter(task => {
+      // Filter by project
+      if (currentProject && task.projectId !== currentProject.id) {
+        return false;
+      }
+      
       // Filter by status
       if (filterConfig.status !== 'all' && task.status !== filterConfig.status) {
         return false;
@@ -86,14 +94,13 @@ const ListView: React.FC = () => {
     });
     
     return result;
-  }, [tasks, filterConfig, sortConfig]);
+  }, [tasks, filterConfig, sortConfig, currentProject]);
+
 
   useEffect(() => {
     // Reset to page 1 when filters change
     setCurrentPage(1);
   }, [filterConfig]);
-
-  
 
 
   // Get paginated tasks
@@ -208,6 +215,17 @@ const ListView: React.FC = () => {
   };
 
 
+  // Show a message if no project is selected
+  if (!currentProject) {
+    return (
+      <div className="bg-white shadow rounded-lg p-8 text-center">
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">No Project Selected</h2>
+        <p className="text-gray-600">Please select a project from the dashboard to view its tasks.</p>
+      </div>
+    );
+  }
+
+
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
       {/* Bulk actions bar */}
@@ -308,6 +326,20 @@ const ListView: React.FC = () => {
                   </div>
                   {task.description && (
                     <div className="text-sm text-gray-500 truncate max-w-xs">{task.description}</div>
+                  )}
+                  {/* Show custom fields if any */}
+                  {Object.keys(task.customFields).length > 0 && (
+                    <div className="mt-1 text-xs text-gray-500">
+                      {Object.entries(task.customFields).slice(0, 2).map(([key, value], index) => (
+                        <span key={key} className="mr-2">
+                          <span className="font-medium">{key}:</span> {value.toString()}
+                          {index < Math.min(2, Object.keys(task.customFields).length - 1) && ", "}
+                        </span>
+                      ))}
+                      {Object.keys(task.customFields).length > 2 && (
+                        <span className="text-gray-400">+{Object.keys(task.customFields).length - 2} more</span>
+                      )}
+                    </div>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

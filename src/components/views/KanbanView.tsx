@@ -1,13 +1,17 @@
-// //src/components/views/KanbanView.tsx
-
+// src/components/views/KanbanView.tsx
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { openTaskModal, openTaskDetail, openDeleteConfirm } from '../../features/ui/uiSlice';
-import { updateTaskPriority, deleteTask, reorderTasks, addTask } from '../../features/tasks/tasksSlice';
-import { TaskPriority, TaskStatus, Task } from '../../types';
+import { 
+  updateTaskPriority, 
+  updateTaskPriorityAsync, 
+  deleteTaskAsync, 
+  reorderTasks, 
+  createTaskAsync 
+} from '../../features/tasks/tasksSlice';
 import { selectCurrentProject } from '../../features/projects/projectsSlice';
-
+import { TaskPriority, TaskStatus, Task } from '../../types';
 
 const KanbanView: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -27,9 +31,14 @@ const KanbanView: React.FC = () => {
   // State to track which column has an active input
   const [activeInputColumn, setActiveInputColumn] = useState<TaskPriority | null>(null);
   
-  // Filter tasks based on current configuration (not by priority since that's our column layout)
+  // Filter tasks based on current configuration and current project
   const filteredTasks = React.useMemo(() => {
     return tasks.filter(task => {
+      // Filter out tasks that don't belong to the current project
+      if (currentProject && task.projectId !== currentProject.id) {
+        return false;
+      }
+      
       // Filter by status
       if (filterConfig.status !== 'all' && task.status !== filterConfig.status) {
         return false;
@@ -42,7 +51,7 @@ const KanbanView: React.FC = () => {
       
       return true;
     });
-  }, [tasks, filterConfig]);
+  }, [tasks, filterConfig, currentProject]);
   
   // Group tasks by priority for Kanban columns
   const tasksByPriority = React.useMemo(() => {
@@ -89,11 +98,23 @@ const KanbanView: React.FC = () => {
     
     // Get the task ID from the draggable ID
     const taskId = result.draggableId;
+    const task = tasks.find(t => t.id === taskId);
+    
+    if (!task || !currentProject) return;
     
     // If moving between columns, update priority with destination index
     if (sourcePriority !== destinationPriority) {
+      // Optimistically update UI
       dispatch(updateTaskPriority({ 
         id: taskId, 
+        priority: destinationPriority,
+        destinationIndex: destination.index
+      }));
+      
+      // Then send to API
+      dispatch(updateTaskPriorityAsync({
+        projectId: currentProject.id,
+        taskId: taskId,
         priority: destinationPriority,
         destinationIndex: destination.index
       }));
@@ -117,6 +138,9 @@ const KanbanView: React.FC = () => {
         priority: sourcePriority, 
         taskIds: newOrder
       }));
+      
+      // API call would go here for reordering
+      // This will need implementation in your taskService and tasksSlice
     }
   };
   
@@ -136,24 +160,29 @@ const KanbanView: React.FC = () => {
   // Handle creating a new task
   const handleCreateTask = (priority: TaskPriority) => {
     const title = newTaskInputs[priority].trim();
-    if (title) {
-      // Create a new task with the specified priority and default status
-      dispatch(addTask({
-        title,
-        description: '',
-        status: 'not started',
-        priority,
-        projectId: currentProject?.id,
-        customFields: {}
-      }));
-      
-      // Reset the input
-      setNewTaskInputs(prev => ({
-        ...prev,
-        [priority]: ''
-      }));
-      setActiveInputColumn(null);
+    if (!title) return;
+    
+    if (!currentProject) {
+      console.error('No project selected');
+      return;
     }
+    
+    // Create a new task with the specified priority and default status
+    dispatch(createTaskAsync({
+      projectId: currentProject.id,
+      title,
+      description: '',
+      status: 'not started',
+      priority,
+      customFields: {}
+    }));
+    
+    // Reset the input
+    setNewTaskInputs(prev => ({
+      ...prev,
+      [priority]: ''
+    }));
+    setActiveInputColumn(null);
   };
   
   // Handle canceling task creation
@@ -249,7 +278,7 @@ const KanbanView: React.FC = () => {
           <div className="mt-1 text-xs text-gray-600">
             {Object.entries(task.customFields).map(([key, value]) => (
               <div key={key}>
-                <span className="font-medium">{key}:</span> {value}
+                <span className="font-medium">{key}:</span> {value.toString()}
               </div>
             ))}
           </div>
@@ -257,6 +286,18 @@ const KanbanView: React.FC = () => {
       )}
     </div>
   );
+  
+  // Show a message if no project is selected
+  if (!currentProject) {
+    return (
+      <div className="h-full flex justify-center items-center">
+        <div className="text-center p-8">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">No Project Selected</h2>
+          <p className="text-gray-600">Please select a project from the dashboard to view its tasks.</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="h-full flex justify-center align-center">
