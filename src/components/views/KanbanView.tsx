@@ -6,11 +6,14 @@ import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { openTaskModal, openTaskDetail, openDeleteConfirm } from '../../features/ui/uiSlice';
 import { updateTaskPriority, deleteTask, reorderTasks, addTask } from '../../features/tasks/tasksSlice';
 import { TaskPriority, TaskStatus, Task } from '../../types';
+import { selectCurrentProject } from '../../features/projects/projectsSlice';
+
 
 const KanbanView: React.FC = () => {
   const dispatch = useAppDispatch();
   const tasks = useAppSelector(state => state.tasks.present.items as Task[]);
   const filterConfig = useAppSelector(state => state.ui.filterConfig);
+  const currentProject = useAppSelector(selectCurrentProject);
   
   // State for quick add task inputs in each column
   const [newTaskInputs, setNewTaskInputs] = useState<Record<TaskPriority, string>>({
@@ -140,6 +143,7 @@ const KanbanView: React.FC = () => {
         description: '',
         status: 'not started',
         priority,
+        projectId: currentProject?.id,
         customFields: {}
       }));
       

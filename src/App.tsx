@@ -1,7 +1,10 @@
-//src/app.tsx
+// //src/app.tsx
 
-import React, { useEffect} from 'react';
-import { useAppSelector, useAppDispatch } from './app/hooks';
+// src/App.tsx
+import React, { useEffect } from 'react';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
+import ProjectDashboard from './components/dashboard/ProjectDashboard';
 import Header from './components/layout/Header';
 import ListView from './components/views/ListView';
 import KanbanView from './components/views/KanbanView';
@@ -10,62 +13,64 @@ import BulkEditModal from './components/modals/BulkEditModal';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
 import TaskDetailView from './components/task/TaskDetailVIew';
 import { closeTaskDetail } from './features/ui/uiSlice';
-import { addTask } from './features/tasks/tasksSlice';
-import { getWelcomeTasks } from './utils/welcomeTasks';
+import { useAppSelector, useAppDispatch } from './app/hooks';
 import AuthLayout from './components/layout/AuthLayout';
+import ProjectView from './components/project/ProjectView';
+
+
+// Root layout that includes modals which are shared across routes
+const RootLayout = () => {
+  return (
+    <AuthLayout>
+      <Outlet />
+      <TaskModal />
+      <DeleteConfirmModal />
+      <BulkEditModal />
+    </AuthLayout>
+  );
+};
+
 
 
 function App() {
-  const dispatch = useAppDispatch();
-  const viewMode = useAppSelector(state => state.ui.viewMode);
-  const isTaskDetailOpen = useAppSelector(state => state.ui.isTaskDetailOpen);
-  const viewingTaskId = useAppSelector(state => state.ui.viewingTaskId);
-  const tasks = useAppSelector(state => state.tasks.present.items);
+  const { isLoading } = useAuth0();
 
-  // Find the task being viewed, if any
-  const taskBeingViewed = viewingTaskId 
-    ? tasks.find(task => task.id === viewingTaskId) 
-    : null;
-
-
-  // Add welcome tasks if no tasks exist
-  useEffect(() => {
-    if (tasks.length === 0) {
-      const welcomeTasks = getWelcomeTasks();
-      welcomeTasks.forEach(task => {
-        dispatch(addTask(task));
-      });
-      console.log('Welcome tasks added!');
-    }
-  }, [dispatch, tasks.length]);
-
-  
-  return (
-    <AuthLayout>
-      <div className="min-h-screen bg-gray-100 ">
-        <Header />
-        
-        <main>
-          <div className="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 ">
-            {viewMode === 'list' ? <ListView /> : <KanbanView />}
-          </div>
-        </main>
-        
-        <TaskModal />
-
-        {/* Task Detail View - only rendered when isTaskDetailOpen is true */}
-        {isTaskDetailOpen && taskBeingViewed && (
-          <TaskDetailView 
-            task={taskBeingViewed} 
-            onClose={() => dispatch(closeTaskDetail())} 
-          />
-        )}
-
-        <DeleteConfirmModal />
-        <BulkEditModal />
+  // Show loading indicator while Auth0 initializes
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
-    </AuthLayout>
-  );
+    );
+  }
+
+  // Define the router configuration
+  const router = createBrowserRouter([
+    {
+      path: "/",
+      element: <RootLayout />,
+      children: [
+        {
+          index: true,
+          element: <ProjectDashboard />
+        },
+        {
+          path: "projects/:projectId",
+          element: <ProjectView />
+        },
+        {
+          path: "*",
+          element: <Navigate to="/" replace />
+        }
+      ]
+    }
+  ]);
+
+  return <RouterProvider router={router} />;
 }
 
 export default App;
+
+
+
+

@@ -13,9 +13,12 @@ import { ViewMode, TaskStatus, TaskPriority } from '../../types';
 import HistoryControls from '../common/HistoryControls';
 import { useAuth0 } from '@auth0/auth0-react';
 
+interface HeaderProps {
+  showBackButton?: boolean;
+  projectName?: string;
+}
 
-
-const Header: React.FC = () => {
+const Header: React.FC = ({ showBackButton = false, projectName }) => {
   const dispatch = useAppDispatch();
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const filterConfig = useAppSelector(state => state.ui.filterConfig);
@@ -57,9 +60,22 @@ const Header: React.FC = () => {
         <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:justify-between">
          
           <div className="flex items-center">
+            {showBackButton && (
+              <button
+                onClick={() => {
+                  // We'll add navigation logic here later
+                  window.history.back();
+                }}
+                className="mr-4 text-gray-600 hover:text-gray-900"
+              >
+                ← Dashboard
+              </button>
+            )}
+            
             <h1 className="text-3xl font-bold text-gray-900 mr-4">
-              Notionesque
+              {projectName || "Notionesque"}
             </h1>
+
             {/* Undo/Redo Controls */}
             <HistoryControls />
           </div>
