@@ -1,5 +1,3 @@
-// //src/app.tsx
-
 // src/App.tsx
 import React, { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
@@ -16,18 +14,41 @@ import { closeTaskDetail } from './features/ui/uiSlice';
 import { useAppSelector, useAppDispatch } from './app/hooks';
 import AuthLayout from './components/layout/AuthLayout';
 import ProjectView from './components/project/ProjectView';
+import WelcomePage from './components/auth/WelcomePage';
 
 
 // Root layout that includes modals which are shared across routes
 const RootLayout = () => {
   return (
-    <AuthLayout>
+    <>
       <Outlet />
       <TaskModal />
       <DeleteConfirmModal />
       <BulkEditModal />
-    </AuthLayout>
+    </>
   );
+};
+
+// Authenticated routes wrapper
+const ProtectedRoutes = () => {
+  const { isAuthenticated, isLoading } = useAuth0();
+
+  // Show loading indicator while Auth0 initializes
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show welcome page
+  if (!isAuthenticated) {
+    return <WelcomePage />;
+  }
+
+  // If authenticated, render the protected content
+  return <AuthLayout><Outlet /></AuthLayout>;
 };
 
 
@@ -51,12 +72,17 @@ function App() {
       element: <RootLayout />,
       children: [
         {
-          index: true,
-          element: <ProjectDashboard />
-        },
-        {
-          path: "projects/:projectId",
-          element: <ProjectView />
+          element: <ProtectedRoutes />,
+          children: [
+            {
+              index: true,
+              element: <ProjectDashboard />
+            },
+            {
+              path: "projects/:projectId",
+              element: <ProjectView />
+            }
+          ]
         },
         {
           path: "*",

@@ -101,6 +101,28 @@ export const updateTaskPriorityAsync = createAsyncThunk(
   }
 );
 
+export const bulkUpdateTasksAsync = createAsyncThunk(
+  'tasks/bulkUpdateTasksAsync',
+  async (
+    data: {
+      projectId: string;
+      taskIds: string[];
+      updates: Partial<Pick<Task, 'status' | 'priority'>>;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      await taskService.bulkUpdateTasks(data.projectId, {
+        taskIds: data.taskIds,
+        updates: data.updates
+      });
+      return { taskIds: data.taskIds, updates: data.updates };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to bulk update tasks');
+    }
+  }
+);
+
 // Create the slice
 export const tasksSlice = createSlice({
   name: 'tasks',
@@ -231,7 +253,53 @@ export const tasksSlice = createSlice({
     
     clearTasks: (state) => {
       state.items = [];
+    },
+
+    bulkUpdateTasks: (state, action: PayloadAction<{ 
+      taskIds: string[]; 
+      updates: Partial<Pick<Task, 'status' | 'priority'>> 
+    }>) => {
+      const { taskIds, updates } = action.payload;
+      
+      // If priority is changing, we need to handle positions
+      if (updates.priority) {
+        // Get all tasks in the destination priority
+        const tasksInDestPriority = state.items.filter(t => t.priority === updates.priority);
+        let nextPosition = tasksInDestPriority.length 
+          ? Math.max(...tasksInDestPriority.map(t => t.position || 0)) + 1 
+          : 0;
+          
+        // Update each task one by one to maintain proper positions
+        state.items = state.items.map(task => {
+          if (taskIds.includes(task.id)) {
+            // If priority is changing, assign a new position
+            const needsNewPosition = updates.priority && task.priority !== updates.priority;
+            
+            return {
+              ...task,
+              ...updates,
+              position: needsNewPosition ? nextPosition++ : (task.position || 0),
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return task;
+        });
+      } else {
+        // No priority change, simpler update
+        state.items = state.items.map(task => {
+          if (taskIds.includes(task.id)) {
+            return {
+              ...task,
+              ...updates,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return task;
+        });
+      }
     }
+
+
   },
   extraReducers: (builder) => {
     builder
@@ -273,7 +341,44 @@ export const tasksSlice = createSlice({
         if (index !== -1) {
           state.items[index] = action.payload;
         }
-      });
+      })
+
+      .addCase(bulkUpdateTasksAsync.fulfilled, (state, action) => {
+        const { taskIds, updates } = action.payload;
+        
+        // Similar logic to the bulkUpdateTasks reducer
+        if (updates.priority) {
+          const tasksInDestPriority = state.items.filter(t => t.priority === updates.priority);
+          let nextPosition = tasksInDestPriority.length 
+            ? Math.max(...tasksInDestPriority.map(t => t.position || 0)) + 1 
+            : 0;
+            
+          state.items = state.items.map(task => {
+            if (taskIds.includes(task.id)) {
+              const needsNewPosition = updates.priority && task.priority !== updates.priority;
+              
+              return {
+                ...task,
+                ...updates,
+                position: needsNewPosition ? nextPosition++ : (task.position || 0),
+                updatedAt: new Date().toISOString()
+              };
+            }
+            return task;
+          });
+        } else {
+          state.items = state.items.map(task => {
+            if (taskIds.includes(task.id)) {
+              return {
+                ...task,
+                ...updates,
+                updatedAt: new Date().toISOString()
+              };
+            }
+            return task;
+          });
+        }
+      })
   }
 });
 
@@ -285,6 +390,7 @@ const undoableActions = [
   'tasks/deleteTasks',
   'tasks/updateTaskPriority',
   'tasks/reorderTasks',
+  'tasks/bulkUpdateTasks'
 ];
 
 // Export actions
@@ -295,6 +401,7 @@ export const {
   deleteTasks,
   updateTaskPriority,
   reorderTasks,
+  bulkUpdateTasks,
   clearTasks
 } = tasksSlice.actions;
 
