@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { closeDeleteConfirm } from '../../features/ui/uiSlice';
-import { deleteTask, deleteTasks, deleteTaskAsync } from '../../features/tasks/tasksSlice';
+import { deleteTask, deleteTasks, deleteTaskAsync, deleteTasksAsync } from '../../features/tasks/tasksSlice';
 import { selectCurrentProject } from '../../features/projects/projectsSlice';
 
 const DeleteConfirmModal: React.FC = () => {
@@ -39,14 +39,10 @@ const DeleteConfirmModal: React.FC = () => {
         dispatch(deleteTasks(deletingTaskIds));
         
         // API call for bulk delete
-        await Promise.all(
-          deletingTaskIds.map(taskId => 
-            dispatch(deleteTaskAsync({
-              projectId: currentProject.id,
-              taskId
-            })).unwrap()
-          )
-        );
+        await dispatch(deleteTasksAsync({
+          projectId: currentProject.id,
+          taskIds: deletingTaskIds
+        })).unwrap();
       } else if (deletingTaskId) {
         // Optimistic update
         dispatch(deleteTask(deletingTaskId));

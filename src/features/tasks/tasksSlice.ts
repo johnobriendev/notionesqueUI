@@ -77,6 +77,22 @@ export const deleteTaskAsync = createAsyncThunk(
   }
 );
 
+//bulk delete
+export const deleteTasksAsync = createAsyncThunk(
+  'tasks/deleteTasksAsync',
+  async (
+    data: { projectId: string; taskIds: string[] },
+    { rejectWithValue }
+  ) => {
+    try {
+      await taskService.deleteTasks(data.projectId, data.taskIds);
+      return data.taskIds;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete tasks');
+    }
+  }
+);
+
 export const updateTaskPriorityAsync = createAsyncThunk(
   'tasks/updateTaskPriority',
   async (
@@ -412,6 +428,11 @@ export const tasksSlice = createSlice({
             };
           }
         });
+      })
+
+      .addCase(deleteTasksAsync.fulfilled, (state, action) => {
+        // Remove all the deleted tasks from state
+        state.items = state.items.filter(task => !action.payload.includes(task.id));
       })
 
   }
