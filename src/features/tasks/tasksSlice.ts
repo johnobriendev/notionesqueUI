@@ -123,6 +123,25 @@ export const bulkUpdateTasksAsync = createAsyncThunk(
   }
 );
 
+export const reorderTasksAsync = createAsyncThunk(
+  'tasks/reorderTasksAsync',
+  async (
+    data: { projectId: string; priority: TaskPriority; taskIds: string[] },
+    { rejectWithValue }
+  ) => {
+    try {
+      await taskService.reorderTasks(
+        data.projectId,
+        data.priority,
+        data.taskIds
+      );
+      return { priority: data.priority, taskIds: data.taskIds };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to reorder tasks');
+    }
+  }
+);
+
 // Create the slice
 export const tasksSlice = createSlice({
   name: 'tasks',
@@ -379,6 +398,22 @@ export const tasksSlice = createSlice({
           });
         }
       })
+
+      .addCase(reorderTasksAsync.fulfilled, (state, action) => {
+        const { priority, taskIds } = action.payload;
+        
+        taskIds.forEach((taskId, index) => {
+          const taskIndex = state.items.findIndex(task => task.id === taskId);
+          if (taskIndex !== -1) {
+            state.items[taskIndex] = {
+              ...state.items[taskIndex],
+              position: index,
+              updatedAt: new Date().toISOString()
+            };
+          }
+        });
+      })
+
   }
 });
 

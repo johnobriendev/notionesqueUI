@@ -7,7 +7,8 @@ import {
   updateTaskPriority, 
   updateTaskPriorityAsync, 
   deleteTaskAsync, 
-  reorderTasks, 
+  reorderTasks,
+  reorderTasksAsync, 
   createTaskAsync 
 } from '../../features/tasks/tasksSlice';
 import { selectCurrentProject } from '../../features/projects/projectsSlice';
@@ -139,8 +140,14 @@ const KanbanView: React.FC = () => {
         taskIds: newOrder
       }));
       
-      // API call would go here for reordering
-      // This will need implementation in your taskService and tasksSlice
+      // API call for persistence
+      if (currentProject) {
+        dispatch(reorderTasksAsync({
+          projectId: currentProject.id,
+          priority: sourcePriority,
+          taskIds: newOrder
+        }));
+      }
     }
   };
   

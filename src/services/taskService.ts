@@ -84,13 +84,13 @@ const taskService = {
   // Bulk update multiple tasks
   bulkUpdateTasks: async (
     projectId: string, 
-    taskIds: string[], 
-    updates: Partial<Pick<Task, 'status' | 'priority'>>
+    data:{
+      taskIds: string[], 
+      updates: Partial<Pick<Task, 'status' | 'priority'>>
+    }
+    
   ): Promise<void> => {
-    await api.put(`/projects/${projectId}/tasks/bulk`, {
-      taskIds,
-      updates
-    });
+    await api.put(`/projects/${projectId}/tasks/bulk`, data);
   }
 };
 
