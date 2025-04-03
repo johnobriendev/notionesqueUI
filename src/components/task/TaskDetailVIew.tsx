@@ -1,7 +1,7 @@
 import React from 'react';
-import { useAppDispatch } from '../../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { openDeleteConfirm, openTaskModal } from '../../features/ui/uiSlice';
-import { deleteTask } from '../../features/tasks/tasksSlice';
+import { selectCurrentProject } from '../../features/projects/projectsSlice';
 import { Task, TaskStatus, TaskPriority } from '../../types';
 
 interface TaskDetailViewProps {
@@ -11,6 +11,7 @@ interface TaskDetailViewProps {
 
 const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
   const dispatch = useAppDispatch();
+  const currentProject = useAppSelector(selectCurrentProject);
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -25,7 +26,8 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
   
   // Handle delete task
   const handleDelete = () => {
-    dispatch(openDeleteConfirm(task.id))
+    dispatch(openDeleteConfirm(task.id));
+    onClose(); // Close the detail view when opening delete confirmation
   };
   
   // Get status badge class
@@ -55,6 +57,9 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Verify the task belongs to the current project
+  const isTaskInCurrentProject = currentProject && task.projectId === currentProject.id;
   
   return (
     <div 
@@ -65,7 +70,7 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
           onClose();
         }
       }}
-      >
+    >
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
@@ -80,6 +85,15 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
             </svg>
           </button>
         </div>
+        
+        {/* Display a warning if the task doesn't belong to the current project */}
+        {!isTaskInCurrentProject && (
+          <div className="bg-yellow-50 px-6 py-2 border-b border-yellow-100">
+            <p className="text-yellow-700 text-sm">
+              This task belongs to a different project than the one you're currently viewing.
+            </p>
+          </div>
+        )}
         
         {/* Content */}
         <div className="px-6 py-4">
@@ -100,6 +114,9 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
               </div>
               <div>
                 <span className="font-medium">Updated:</span> {formatDate(task.updatedAt)}
+              </div>
+              <div>
+                <span className="font-medium">Project ID:</span> {task.projectId}
               </div>
             </div>
           </div>
