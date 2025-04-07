@@ -34,9 +34,21 @@ const ProjectDashboard: React.FC = () => {
   const [projectDescription, setProjectDescription] = useState('');
 
    // Fetch projects when the component mounts and the user is authenticated
-   useEffect(() => {
+  //  useEffect(() => {
+  //   if (isAuthenticated) {
+  //     dispatch(fetchProjects());
+  //   }
+  // }, [dispatch, isAuthenticated]);
+
+  //add small delay to useEffect to fix project loading error
+  useEffect(() => {
     if (isAuthenticated) {
-      dispatch(fetchProjects());
+      // Add a small delay to ensure auth is fully set up
+      const timer = setTimeout(() => {
+        dispatch(fetchProjects());
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
   }, [dispatch, isAuthenticated]);
 

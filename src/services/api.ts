@@ -1,6 +1,8 @@
 // src/services/api.ts
 
 import axios, { AxiosError } from 'axios';
+import { User } from '@auth0/auth0-react';
+
 
 // Create axios instance with base URL
 const api = axios.create({
@@ -12,7 +14,10 @@ const api = axios.create({
 
 // Add auth token interceptor function
 // This will be called from AuthProvider when the user is authenticated
-export const setupAuthInterceptor = (getToken: () => Promise<string | undefined>) => {
+export const setupAuthInterceptor = (
+  getToken: () => Promise<string | undefined>,
+  getUserInfo?: () => User | undefined
+) => {
   // Add a request interceptor
   api.interceptors.request.use(async (config) => {
     // Get the token asynchronously
@@ -20,7 +25,15 @@ export const setupAuthInterceptor = (getToken: () => Promise<string | undefined>
     
     // If we have a token, add it to the Authorization header
     if (token) {
+      console.log('Adding token to request');
       config.headers.Authorization = `Bearer ${token}`;
+
+      // If we have user info, add the email as a custom header
+      const userInfo = getUserInfo?.();
+      if (userInfo?.email) {
+        console.log('Adding user email to request headers');
+        config.headers['X-User-Email'] = userInfo.email;
+      }
     }
     
     return config;

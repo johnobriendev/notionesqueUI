@@ -2,6 +2,7 @@
 import React, {useEffect} from 'react';
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 import { setupAuthInterceptor } from '../services/api';
+import { debugToken } from '../utils/authDebug';
 
 
 interface AuthProviderProps {
@@ -37,11 +38,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 // New component to handle API interceptors and auth setup
 const AuthSetup: React.FC<AuthProviderProps> = ({ children }) => {
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const { getAccessTokenSilently, isAuthenticated, user } = useAuth0();
 
   // Setup the auth interceptor for API requests when authenticated
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('User is authenticated, checking Auth0 config');
+      console.log('Frontend Auth0 Config:');
+      console.log('- Domain:', import.meta.env.VITE_AUTH0_DOMAIN);
+      console.log('- Audience:', import.meta.env.VITE_AUTH0_AUDIENCE);
+      console.log('- Client ID:', import.meta.env.VITE_AUTH0_CLIENT_ID ? 'Set (hidden)' : 'Not set');
+      console.log('User object has email:', !!user?.email);
+      
       const getToken = async () => {
         try {
           return await getAccessTokenSilently();
@@ -51,9 +59,14 @@ const AuthSetup: React.FC<AuthProviderProps> = ({ children }) => {
         }
       };
 
-      setupAuthInterceptor(getToken);
+      const getUserInfo = () => user;
+
+
+      debugToken(getToken);
+
+      setupAuthInterceptor(getToken, getUserInfo);
     }
-  }, [isAuthenticated, getAccessTokenSilently]);
+  }, [isAuthenticated, getAccessTokenSilently, user]);
 
   return <>{children}</>;
 };
