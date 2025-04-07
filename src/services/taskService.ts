@@ -9,6 +9,7 @@ interface CreateTaskRequest {
   status: TaskStatus;
   priority: TaskPriority;
   position?: number;
+  customFields?: Record<string, string | number | boolean>;
 }
 
 interface UpdateTaskRequest {
@@ -17,6 +18,7 @@ interface UpdateTaskRequest {
   status?: TaskStatus;
   priority?: TaskPriority;
   position?: number;
+  customFields?: Record<string, string | number | boolean>; 
 }
 
 // Task API service
@@ -35,13 +37,31 @@ const taskService = {
   
   // Create a new task
   createTask: async (data: CreateTaskRequest): Promise<Task> => {
-    const response = await api.post(`/projects/${data.projectId}/tasks`, data);
+    // Transform data to match backend expectations
+    const payload = {
+      ...data,
+      // Convert empty string to undefined
+      description: data.description === "" ? undefined : data.description,
+      // Ensure customFields is included
+      customFields: data.customFields || {}
+    };
+    
+    const response = await api.post(`/projects/${data.projectId}/tasks`, payload);
     return response.data;
   },
   
   // Update an existing task
   updateTask: async (projectId: string, taskId: string, updates: UpdateTaskRequest): Promise<Task> => {
-    const response = await api.put(`/projects/${projectId}/tasks/${taskId}`, updates);
+    // Transform updates to match backend expectations
+    const payload = {
+      ...updates,
+      // Convert empty string to undefined
+      description: updates.description === "" ? undefined : updates.description,
+      // Ensure customFields is included if present
+      ...(updates.customFields !== undefined && { customFields: updates.customFields })
+    };
+    
+    const response = await api.put(`/projects/${projectId}/tasks/${taskId}`, payload);
     return response.data;
   },
   

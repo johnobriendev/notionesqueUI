@@ -50,7 +50,13 @@ const ListView: React.FC = () => {
   
   // Filter and sort tasks based on current configuration and current project
  const filteredAndSortedTasks = React.useMemo(() => {
-    // First, filter the tasks
+    // Check if tasks is an array before filtering
+  if (!Array.isArray(tasks)) {
+    console.error("Tasks is not an array:", tasks);
+    return [];
+  }
+  
+  // First, filter the tasks
     let result = tasks.filter(task => {
       // Filter by project
       if (currentProject && task.projectId !== currentProject.id) {

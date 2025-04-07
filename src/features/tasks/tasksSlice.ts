@@ -32,14 +32,36 @@ export const fetchTasks = createAsyncThunk(
 
 export const createTaskAsync = createAsyncThunk(
   'tasks/createTask',
-  async (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'position'>, { rejectWithValue }) => {
+  async (task: { 
+    projectId: string;
+    title: string;
+    description?: string;  // Keep as string
+    status?: TaskStatus;
+    priority?: TaskPriority;
+    customFields?: Record<string, string | number | boolean>;
+  }, { getState, rejectWithValue }) => {
     try {
+      // Calculate position as before
+      const state = getState() as { tasks: { present: { items: Task[] } } };
+      const tasks = state.tasks.present.items;
+      
+      const tasksWithSamePriority = tasks.filter(
+        t => t.priority === (task.priority || 'none') && t.projectId === task.projectId
+      );
+      
+      const position = tasksWithSamePriority.length 
+        ? Math.max(...tasksWithSamePriority.map(t => t.position || 0)) + 1 
+        : 0;
+      
+      // Create task without type issues
       return await taskService.createTask({
         projectId: task.projectId,
         title: task.title,
-        description: task.description,
-        status: task.status,
-        priority: task.priority
+        description: task.description,  // Let the service handle conversion
+        status: task.status || 'not started',
+        priority: task.priority || 'none',
+        position,
+        customFields: task.customFields
       });
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to create task');
@@ -53,11 +75,41 @@ export const updateTaskAsync = createAsyncThunk(
     data: { 
       projectId: string; 
       taskId: string; 
-      updates: Partial<Omit<Task, 'id' | 'projectId' | 'createdAt' | 'updatedAt'>>
+      updates: {
+        title?: string;
+        description?: string;
+        status?: TaskStatus;
+        priority?: TaskPriority;
+        position?: number;
+        customFields?: Record<string, string | number | boolean>;
+      }
     }, 
-    { rejectWithValue }
+    { getState, rejectWithValue }
   ) => {
     try {
+      // If priority is changing, we may need to calculate a new position
+      if (data.updates.priority) {
+        // Get current task and all tasks
+        const state = getState() as { tasks: { present: { items: Task[] } } };
+        const tasks = state.tasks.present.items;
+        const currentTask = tasks.find(t => t.id === data.taskId);
+        
+        // If priority is changing and position isn't specifically provided
+        if (currentTask && currentTask.priority !== data.updates.priority && data.updates.position === undefined) {
+          // Calculate new position
+          const tasksInNewPriority = tasks.filter(
+            t => t.priority === data.updates.priority && t.projectId === data.projectId
+          );
+          
+          const newPosition = tasksInNewPriority.length 
+            ? Math.max(...tasksInNewPriority.map(t => t.position || 0)) + 1 
+            : 0;
+          
+          // Include the calculated position in updates
+          data.updates.position = newPosition;
+        }
+      }
+      
       return await taskService.updateTask(data.projectId, data.taskId, data.updates);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update task');
@@ -125,14 +177,46 @@ export const bulkUpdateTasksAsync = createAsyncThunk(
       taskIds: string[];
       updates: Partial<Pick<Task, 'status' | 'priority'>>;
     },
-    { rejectWithValue }
+    { getState, rejectWithValue }
   ) => {
     try {
-      await taskService.bulkUpdateTasks(data.projectId, {
-        taskIds: data.taskIds,
-        updates: data.updates
-      });
-      return { taskIds: data.taskIds, updates: data.updates };
+      // If priority is changing, calculate positions for each task
+      if (data.updates.priority) {
+        const state = getState() as { tasks: { present: { items: Task[] } } };
+        const tasks = state.tasks.present.items;
+        
+        // Find highest position in the destination priority
+        const tasksInDestPriority = tasks.filter(
+          t => t.priority === data.updates.priority && t.projectId === data.projectId
+        );
+        
+        let nextPosition = tasksInDestPriority.length 
+          ? Math.max(...tasksInDestPriority.map(t => t.position || 0)) + 1 
+          : 0;
+        
+        // Process each task individually with its new position
+        for (const taskId of data.taskIds) {
+          const task = tasks.find(t => t.id === taskId);
+          if (task && task.priority !== data.updates.priority) {
+            await taskService.updateTask(data.projectId, taskId, {
+              ...data.updates,
+              position: nextPosition++
+            });
+          } else if (task) {
+            // If priority isn't changing, just update other fields
+            await taskService.updateTask(data.projectId, taskId, data.updates);
+          }
+        }
+        
+        return { taskIds: data.taskIds, updates: data.updates };
+      } else {
+        // No position changes needed, use the original bulk update
+        await taskService.bulkUpdateTasks(data.projectId, {
+          taskIds: data.taskIds,
+          updates: data.updates
+        });
+        return { taskIds: data.taskIds, updates: data.updates };
+      }
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to bulk update tasks');
     }

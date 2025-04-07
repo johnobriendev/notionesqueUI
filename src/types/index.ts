@@ -23,7 +23,7 @@ export interface Task {
     position: number;
     createdAt: string;
     updatedAt: string;
-    customFields: Record<string,string | number | boolean>;
+    customFields: Record<string, string | number | boolean>;
 }
 
 export interface User {
