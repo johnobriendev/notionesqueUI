@@ -34,7 +34,7 @@ const projectService = {
   
   // Update an existing project
   updateProject: async (projectId: string, updates: UpdateProjectRequest): Promise<Project> => {
-    const response = await api.put(`/projects/${projectId}`, updates);
+    const response = await api.patch(`/projects/${projectId}`, updates);
     return response.data;
   },
   
