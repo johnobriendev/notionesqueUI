@@ -61,7 +61,7 @@ const taskService = {
       ...(updates.customFields !== undefined && { customFields: updates.customFields })
     };
     
-    const response = await api.put(`/projects/${projectId}/tasks/${taskId}`, payload);
+    const response = await api.patch(`/projects/${projectId}/tasks/${taskId}`, payload);
     return response.data;
   },
   
@@ -82,7 +82,7 @@ const taskService = {
     priority: TaskPriority, 
     destinationIndex?: number
   ): Promise<Task> => {
-    const response = await api.put(`/projects/${projectId}/tasks/${taskId}/priority`, {
+    const response = await api.patch(`/projects/${projectId}/tasks/${taskId}/priority`, {
       priority,
       destinationIndex
     });

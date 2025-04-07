@@ -18,7 +18,8 @@ interface HeaderProps {
   projectName?: string;
 }
 
-const Header: React.FC = ({ showBackButton = false, projectName }) => {
+const Header: React.FC<HeaderProps> = (props) => {
+  const { showBackButton = false, projectName } = props;
   const dispatch = useAppDispatch();
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const filterConfig = useAppSelector(state => state.ui.filterConfig);
