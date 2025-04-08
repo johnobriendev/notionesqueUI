@@ -29,9 +29,20 @@ interface UiState {
   
 }
 
+// Get saved view mode from localStorage or default to 'list'
+const getSavedViewMode = (): ViewMode => {
+  try {
+    const savedViewMode = localStorage.getItem('viewMode');
+    return (savedViewMode === 'list' || savedViewMode === 'kanban') ? savedViewMode : 'list';
+  } catch (error) {
+    console.error('Error reading from localStorage:', error);
+    return 'list';
+  }
+};
+
 // Initial state when the application loads
 const initialState: UiState = {
-  viewMode: 'list',
+  viewMode: getSavedViewMode(),
   sortConfig: {
     field: 'createdAt',
     direction: 'desc',
@@ -61,6 +72,13 @@ export const uiSlice = createSlice({
     // Toggle between list and kanban views
     setViewMode: (state, action: PayloadAction<ViewMode>) => {
       state.viewMode = action.payload;
+
+      try {
+        localStorage.setItem('viewMode', action.payload);
+      } catch (error) {
+        console.error('Error saving to localStorage:', error);
+      }
+
     },
     
     // Update the sort configuration
