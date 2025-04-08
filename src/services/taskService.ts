@@ -95,9 +95,13 @@ const taskService = {
     priority: TaskPriority, 
     taskIds: string[]
   ): Promise<void> => {
+    const tasks = taskIds.map((id, index) => ({
+      id,
+      position: index
+    }));
+    
     await api.put(`/projects/${projectId}/tasks/reorder`, {
-      priority,
-      taskIds
+      tasks // Send the transformed data structure
     });
   },
   

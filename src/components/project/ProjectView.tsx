@@ -95,11 +95,11 @@ const ProjectView: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Type cast Header to any to bypass the TypeScript error */}
-      {React.createElement(Header as any, {
-        showBackButton: true,
-        projectName: currentProject.name
-      })}
+      
+      <Header 
+        showBackButton={true} 
+        projectName={currentProject.name}
+      />
       
       <main>
         <div className="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8">

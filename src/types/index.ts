@@ -17,13 +17,13 @@ export interface Task {
     id: string;
     projectId: string;
     title: string;
-    description: string;
+    description: string | null;
     status: TaskStatus;
     priority: TaskPriority;
     position: number;
     createdAt: string;
     updatedAt: string;
-    customFields: Record<string, string | number | boolean>;
+    customFields: any;
 }
 
 export interface User {
