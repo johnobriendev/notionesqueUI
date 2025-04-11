@@ -23,7 +23,7 @@ const TaskModal: React.FC = () => {
   
   // Form state
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState<string>('');
   const [status, setStatus] = useState<TaskStatus>('not started');
   const [priority, setPriority] = useState<TaskPriority>('none');
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
@@ -41,7 +41,7 @@ const TaskModal: React.FC = () => {
       if (isEditing && editingTask) {
         // Editing existing task - populate form
         setTitle(editingTask.title);
-        setDescription(editingTask.description);
+        setDescription(editingTask.description || '');
         setStatus(editingTask.status);
         setPriority(editingTask.priority);
         setCustomFields(editingTask.customFields as Record<string, string>);
