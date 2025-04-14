@@ -180,48 +180,23 @@ export const bulkUpdateTasksAsync = createAsyncThunk(
     { getState, rejectWithValue }
   ) => {
     try {
-      // If priority is changing, calculate positions for each task
-      if (data.updates.priority) {
-        const state = getState() as { tasks: { present: { items: Task[] } } };
-        const tasks = state.tasks.present.items;
-        
-        // Find highest position in the destination priority
-        const tasksInDestPriority = tasks.filter(
-          t => t.priority === data.updates.priority && t.projectId === data.projectId
-        );
-        
-        let nextPosition = tasksInDestPriority.length 
-          ? Math.max(...tasksInDestPriority.map(t => t.position || 0)) + 1 
-          : 0;
-        
-        // Process each task individually with its new position
-        for (const taskId of data.taskIds) {
-          const task = tasks.find(t => t.id === taskId);
-          if (task && task.priority !== data.updates.priority) {
-            await taskService.updateTask(data.projectId, taskId, {
-              ...data.updates,
-              position: nextPosition++
-            });
-          } else if (task) {
-            // If priority isn't changing, just update other fields
-            await taskService.updateTask(data.projectId, taskId, data.updates);
-          }
-        }
-        
-        return { taskIds: data.taskIds, updates: data.updates };
-      } else {
-        // No position changes needed, use the original bulk update
-        await taskService.bulkUpdateTasks(data.projectId, {
-          taskIds: data.taskIds,
-          updates: data.updates
-        });
-        return { taskIds: data.taskIds, updates: data.updates };
-      }
+      // Always use the bulk update endpoint
+      console.log('Sending bulk update with:', data);
+      
+      await taskService.bulkUpdateTasks(data.projectId, {
+        taskIds: data.taskIds,
+        updates: data.updates
+      });
+      
+      return { taskIds: data.taskIds, updates: data.updates };
     } catch (error: any) {
+      console.error('Bulk update error:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to bulk update tasks');
     }
   }
 );
+
+
 
 export const reorderTasksAsync = createAsyncThunk(
   'tasks/reorderTasksAsync',
