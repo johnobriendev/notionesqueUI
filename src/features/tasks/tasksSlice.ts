@@ -38,6 +38,7 @@ export const createTaskAsync = createAsyncThunk(
     description?: string;  // Keep as string
     status?: TaskStatus;
     priority?: TaskPriority;
+    position?: number;
     customFields?: Record<string, string | number | boolean>;
   }, { getState, rejectWithValue }) => {
     try {
@@ -75,6 +76,7 @@ export const updateTaskAsync = createAsyncThunk(
     data: { 
       projectId: string; 
       taskId: string; 
+      previousTask?: Task; // previous state for undo/redo
       updates: {
         title?: string;
         description?: string;
@@ -87,6 +89,13 @@ export const updateTaskAsync = createAsyncThunk(
     { getState, rejectWithValue }
   ) => {
     try {
+      // Get the current task to store as previous state if not provided
+      if (!data.previousTask) {
+        const state = getState() as { tasks: { present: { items: Task[] } } };
+        data.previousTask = state.tasks.present.items.find(t => t.id === data.taskId);
+      }
+
+
       // If priority is changing, we may need to calculate a new position
       if (data.updates.priority) {
         // Get current task and all tasks
@@ -119,8 +128,15 @@ export const updateTaskAsync = createAsyncThunk(
 
 export const deleteTaskAsync = createAsyncThunk(
   'tasks/deleteTask',
-  async (data: { projectId: string; taskId: string }, { rejectWithValue }) => {
+  async (data: { projectId: string; taskId: string; originalTask?: Task; }, { getState, rejectWithValue }) => {
     try {
+      // Get the original task if not provided
+      if (!data.originalTask) {
+        const state = getState() as { tasks: { present: { items: Task[] } } };
+        data.originalTask = state.tasks.present.items.find(t => t.id === data.taskId);
+      }
+
+
       await taskService.deleteTask(data.projectId, data.taskId);
       return data.taskId;
     } catch (error: any) {
@@ -152,11 +168,23 @@ export const updateTaskPriorityAsync = createAsyncThunk(
       projectId: string; 
       taskId: string; 
       priority: TaskPriority; 
+      previousPriority?: TaskPriority; //  for undo
+      previousPosition?: number; // for undo 
       destinationIndex?: number 
     }, 
-    { rejectWithValue }
+    { getState, rejectWithValue }
   ) => {
     try {
+      // Get previous state if not provided
+      if (!data.previousPriority || data.previousPosition === undefined) {
+        const state = getState() as { tasks: { present: { items: Task[] } } };
+        const task = state.tasks.present.items.find(t => t.id === data.taskId);
+        if (task) {
+          data.previousPriority = task.priority;
+          data.previousPosition = task.position;
+        }
+      }
+
       return await taskService.updateTaskPriority(
         data.projectId,
         data.taskId,
@@ -175,11 +203,20 @@ export const bulkUpdateTasksAsync = createAsyncThunk(
     data: {
       projectId: string;
       taskIds: string[];
+      previousTasks?: Task[]; // for undo
       updates: Partial<Pick<Task, 'status' | 'priority'>>;
     },
     { getState, rejectWithValue }
   ) => {
     try {
+      // Get previous state if not provided
+      if (!data.previousTasks) {
+        const state = getState() as { tasks: { present: { items: Task[] } } };
+        data.previousTasks = state.tasks.present.items.filter(t => 
+          data.taskIds.includes(t.id)
+        );
+      }
+
       // Always use the bulk update endpoint
       console.log('Sending bulk update with:', data);
       
@@ -201,10 +238,19 @@ export const bulkUpdateTasksAsync = createAsyncThunk(
 export const reorderTasksAsync = createAsyncThunk(
   'tasks/reorderTasksAsync',
   async (
-    data: { projectId: string; priority: TaskPriority; taskIds: string[] },
-    { rejectWithValue }
+    data: { projectId: string; priority: TaskPriority; taskIds: string[]; previousOrder?: string[]; },
+    { getState, rejectWithValue }
   ) => {
     try {
+      // Get previous state if not provided
+      if (!data.previousOrder) {
+        const state = getState() as { tasks: { present: { items: Task[] } } };
+        const tasksInPriority = state.tasks.present.items
+          .filter(t => t.priority === data.priority && t.projectId === data.projectId)
+          .sort((a, b) => a.position - b.position);
+        data.previousOrder = tasksInPriority.map(t => t.id);
+      }
+
       await taskService.reorderTasks(
         data.projectId,
         data.priority,
