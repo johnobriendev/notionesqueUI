@@ -2,14 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { fetchProject, selectCurrentProject, setCurrentProject, fetchProjects } from '../../features/projects/projectsSlice';
+import { fetchProject, selectCurrentProject, setCurrentProject } from '../../features/projects/projectsSlice';
 import { fetchTasks } from '../../features/tasks/tasksSlice';
+import { closeTaskDetail } from '../../features/ui/uiSlice';
+import { ActionCreators } from 'redux-undo'; // ADD THIS IMPORT
+import { clearUndoHistory } from '../../middleware/undoMiddleware'; // ADD THIS IMPORT
 import Header from '../layout/Header';
 import ListView from '../views/ListView';
 import KanbanView from '../views/KanbanView';
 import TaskDetailView from '../task/TaskDetailVIew';
-import { closeTaskDetail } from '../../features/ui/uiSlice';
-
 
 const ProjectView: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -18,7 +19,6 @@ const ProjectView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  
   const currentProject = useAppSelector(selectCurrentProject);
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const isTaskDetailOpen = useAppSelector(state => state.ui.isTaskDetailOpen);
@@ -62,6 +62,10 @@ const ProjectView: React.FC = () => {
         if (!project) throw new Error('Failed to load project');
         
         if (isMounted) {
+          // CLEAR UNDO HISTORY WHEN SWITCHING PROJECTS
+          clearUndoHistory(); // Clear custom middleware history
+          dispatch(ActionCreators.clearHistory()); // Clear redux-undo history
+          
           dispatch(setCurrentProject(project));
           await dispatch(fetchTasks(projectId)).unwrap();
           setLoading(false);
@@ -95,7 +99,6 @@ const ProjectView: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-gray-100">
-      
       <Header 
         showBackButton={true} 
         projectName={currentProject.name}

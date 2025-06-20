@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { closeBulkEdit } from '../../features/ui/uiSlice';
-import { bulkUpdateTasks, bulkUpdateTasksAsync } from '../../features/tasks/tasksSlice';
+import { bulkUpdateTasksAsync } from '../../features/tasks/tasksSlice'; // FIXED: Only import async version
 import { selectCurrentProject } from '../../features/projects/projectsSlice';
 import { TaskStatus, TaskPriority } from '../../types';
 
@@ -45,13 +45,7 @@ const BulkEditModal: React.FC = () => {
         ? { status } 
         : { priority };
       
-      // Optimistic update
-      dispatch(bulkUpdateTasks({
-        taskIds: selectedTaskIds,
-        updates
-      }));
-      
-      // API call
+      // SIMPLIFIED: Only dispatch async action (no double dispatching)
       await dispatch(bulkUpdateTasksAsync({
         projectId: currentProject.id,
         taskIds: selectedTaskIds,

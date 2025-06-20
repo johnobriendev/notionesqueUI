@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { closeTaskModal } from '../../features/ui/uiSlice';
-import { addTask, updateTask, createTaskAsync, updateTaskAsync } from '../../features/tasks/tasksSlice';
+import { createTaskAsync, updateTaskAsync } from '../../features/tasks/tasksSlice';
 import { selectCurrentProject } from '../../features/projects/projectsSlice';
 import { Task, TaskStatus, TaskPriority } from '../../types';
 import { useNavigate } from 'react-router-dom';

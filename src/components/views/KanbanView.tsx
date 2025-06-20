@@ -4,10 +4,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { openTaskModal, openTaskDetail, openDeleteConfirm } from '../../features/ui/uiSlice';
 import { 
-  updateTaskPriority, 
   updateTaskPriorityAsync, 
-  deleteTaskAsync, 
-  reorderTasks,
   reorderTasksAsync, 
   createTaskAsync 
 } from '../../features/tasks/tasksSlice';
@@ -105,14 +102,7 @@ const KanbanView: React.FC = () => {
     
     // If moving between columns, update priority with destination index
     if (sourcePriority !== destinationPriority) {
-      // Optimistically update UI
-      dispatch(updateTaskPriority({ 
-        id: taskId, 
-        priority: destinationPriority,
-        destinationIndex: destination.index
-      }));
-      
-      // Then send to API
+      // SIMPLIFIED: Only dispatch async action (no double dispatching)
       dispatch(updateTaskPriorityAsync({
         projectId: currentProject.id,
         taskId: taskId,
@@ -134,20 +124,12 @@ const KanbanView: React.FC = () => {
       // Create an array of task IDs in their new order
       const newOrder = reorderedTasks.map(task => task.id);
       
-      // Dispatch an action to update the task order
-      dispatch(reorderTasks({ 
-        priority: sourcePriority, 
+      // SIMPLIFIED: Only dispatch async action (no double dispatching)
+      dispatch(reorderTasksAsync({
+        projectId: currentProject.id,
+        priority: sourcePriority,
         taskIds: newOrder
       }));
-      
-      // API call for persistence
-      if (currentProject) {
-        dispatch(reorderTasksAsync({
-          projectId: currentProject.id,
-          priority: sourcePriority,
-          taskIds: newOrder
-        }));
-      }
     }
   };
   
@@ -174,7 +156,7 @@ const KanbanView: React.FC = () => {
       return;
     }
     
-    // Create a new task with the specified priority and default status
+    // SIMPLIFIED: Only dispatch async action (no double dispatching)
     dispatch(createTaskAsync({
       projectId: currentProject.id,
       title,
@@ -285,7 +267,7 @@ const KanbanView: React.FC = () => {
           <div className="mt-1 text-xs text-gray-600">
             {Object.entries(task.customFields).map(([key, value]) => (
               <div key={key}>
-                <span className="font-medium">{key}:</span> {value.toString()}
+                <span className="font-medium">{key}:</span> {String(value)}
               </div>
             ))}
           </div>

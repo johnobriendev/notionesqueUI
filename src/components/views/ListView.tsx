@@ -1,8 +1,7 @@
-//src/components/views/ListView.tsx
+// src/components/views/ListView.tsx
 import React, {useState, useEffect} from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { openTaskModal, setSortConfig, openTaskDetail, openDeleteConfirm, openBulkEdit, selectIsDeleteConfirmOpen } from '../../features/ui/uiSlice';
-import { deleteTask, deleteTaskAsync, bulkUpdateTasks } from '../../features/tasks/tasksSlice';
 import { selectCurrentProject } from '../../features/projects/projectsSlice';
 import { Task, SortField, SortDirection, TaskStatus, TaskPriority } from '../../types';
 
@@ -14,15 +13,12 @@ const ListView: React.FC = () => {
   const isDeleteConfirmOpen = useAppSelector(selectIsDeleteConfirmOpen);
   const currentProject = useAppSelector(selectCurrentProject);
 
-
-
   // State for selected tasks (for bulk actions)
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
 
    // State for pagination
    const [currentPage, setCurrentPage] = useState(1);
    const tasksPerPage = 10;
-
 
    // Reset selections when tasks change (due to deletion, etc.)
   useEffect(() => {
@@ -102,12 +98,10 @@ const ListView: React.FC = () => {
     return result;
   }, [tasks, filterConfig, sortConfig, currentProject]);
 
-
   useEffect(() => {
     // Reset to page 1 when filters change
     setCurrentPage(1);
   }, [filterConfig]);
-
 
   // Get paginated tasks
   const paginatedTasks = React.useMemo(() => {
@@ -149,13 +143,7 @@ const ListView: React.FC = () => {
   // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedTaskIds.size === 0) return;
-
     dispatch(openDeleteConfirm(Array.from(selectedTaskIds)));
-    
-    // if (window.confirm(`Are you sure you want to delete ${selectedTaskIds.size} tasks?`)) {
-    //   dispatch(deleteTasks(Array.from(selectedTaskIds)));
-    //   setSelectedTaskIds(new Set());
-    // }
   };
   
   // Toggle task selection
@@ -220,7 +208,6 @@ const ListView: React.FC = () => {
     return new Date(dateString).toLocaleString();
   };
 
-
   // Show a message if no project is selected
   if (!currentProject) {
     return (
@@ -230,7 +217,6 @@ const ListView: React.FC = () => {
       </div>
     );
   }
-
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -259,7 +245,6 @@ const ListView: React.FC = () => {
             >
               Change Priority
             </button>
-            {/* Existing delete button */}
             <button
               onClick={handleBulkDelete}
               className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
@@ -338,7 +323,7 @@ const ListView: React.FC = () => {
                     <div className="mt-1 text-xs text-gray-500">
                       {Object.entries(task.customFields).slice(0, 2).map(([key, value], index) => (
                         <span key={key} className="mr-2">
-                          <span className="font-medium">{key}:</span> {value.toString()}
+                          <span className="font-medium">{key}:</span> {String(value)}
                           {index < Math.min(2, Object.keys(task.customFields).length - 1) && ", "}
                         </span>
                       ))}
@@ -518,8 +503,6 @@ const ListView: React.FC = () => {
       )}
     </div>
   );
-  
-  
 };
 
 export default ListView;

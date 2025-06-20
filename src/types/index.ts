@@ -23,7 +23,7 @@ export interface Task {
     position: number;
     createdAt: string;
     updatedAt: string;
-    customFields: any;
+    customFields: Record<string, string | number | boolean>;
 }
 
 export interface User {
@@ -55,6 +55,8 @@ export interface FilterConfig {
 // Structure for task state with redux-undo
 export interface TasksState {
   items: Task[];
+  isLoading: boolean;
+  error: string | null;
 }
 
 // Add ProjectsState for managing projects

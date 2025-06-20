@@ -6,6 +6,7 @@ import tasksReducer from '../features/tasks/tasksSlice';
 import uiReducer from '../features/ui/uiSlice';
 import projectsReducer from '../features/projects/projectsSlice';
 import { clearHistoryMiddleware } from './clearHistoryMiddleware';
+import { undoMiddleware } from '../middleware/undoMiddleware';
 import { RootState } from '../types';
 
 
@@ -37,7 +38,7 @@ export const store = configureStore({
         // Ignore these action types for serializability check
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
       },
-    }).concat(clearHistoryMiddleware),
+    }).concat(clearHistoryMiddleware, undoMiddleware),
 });
 
 // Create the persistor for the store

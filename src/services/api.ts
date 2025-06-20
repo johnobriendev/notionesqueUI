@@ -25,13 +25,13 @@ export const setupAuthInterceptor = (
     
     // If we have a token, add it to the Authorization header
     if (token) {
-      console.log('Adding token to request');
+      //console.log('Adding token to request');
       config.headers.Authorization = `Bearer ${token}`;
 
       // If we have user info, add the email as a custom header
       const userInfo = getUserInfo?.();
       if (userInfo?.email) {
-        console.log('Adding user email to request headers');
+        //console.log('Adding user email to request headers');
         config.headers['X-User-Email'] = userInfo.email;
       }
     }

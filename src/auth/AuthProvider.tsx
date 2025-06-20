@@ -43,12 +43,12 @@ const AuthSetup: React.FC<AuthProviderProps> = ({ children }) => {
   // Setup the auth interceptor for API requests when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('User is authenticated, checking Auth0 config');
-      console.log('Frontend Auth0 Config:');
-      console.log('- Domain:', import.meta.env.VITE_AUTH0_DOMAIN);
-      console.log('- Audience:', import.meta.env.VITE_AUTH0_AUDIENCE);
-      console.log('- Client ID:', import.meta.env.VITE_AUTH0_CLIENT_ID ? 'Set (hidden)' : 'Not set');
-      console.log('User object has email:', !!user?.email);
+      //console.log('User is authenticated, checking Auth0 config');
+      //console.log('Frontend Auth0 Config:');
+      //console.log('- Domain:', import.meta.env.VITE_AUTH0_DOMAIN);
+      //console.log('- Audience:', import.meta.env.VITE_AUTH0_AUDIENCE);
+      //console.log('- Client ID:', import.meta.env.VITE_AUTH0_CLIENT_ID ? 'Set (hidden)' : 'Not set');
+      //console.log('User object has email:', !!user?.email);
       
       const getToken = async () => {
         try {
