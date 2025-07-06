@@ -2,12 +2,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import tasksReducer from '../features/tasks/tasksSlice';
+import tasksReducer, {tasksMetaReducer} from '../features/tasks/store/tasksSlice';
 import uiReducer from '../features/ui/uiSlice';
-import projectsReducer from '../features/projects/projectsSlice';
-import { clearHistoryMiddleware } from './clearHistoryMiddleware';
-import { undoMiddleware } from '../middleware/undoMiddleware';
-import { RootState } from '../types';
+import projectsReducer from '../features/projects/store/projectsSlice';
+
 
 
 
@@ -29,6 +27,7 @@ const projectsPersistConfig = {
 export const store = configureStore({
   reducer: {
     tasks: persistReducer(tasksPersistConfig, tasksReducer) as any,
+    tasksMeta: tasksMetaReducer, 
     ui: uiReducer, // UI state doesn't need to be persisted
     projects: persistReducer(projectsPersistConfig, projectsReducer) as any,
   },
@@ -38,7 +37,7 @@ export const store = configureStore({
         // Ignore these action types for serializability check
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
       },
-    }).concat(clearHistoryMiddleware, undoMiddleware),
+    }).concat(),
 });
 
 // Create the persistor for the store

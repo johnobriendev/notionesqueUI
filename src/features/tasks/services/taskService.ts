@@ -1,8 +1,11 @@
-import api from './api';
-import { Task, TaskStatus, TaskPriority } from '../types';
+//src/services/taskService.ts
+
+import api from '../../../lib/api';
+import { Task, TaskStatus, TaskPriority } from '../../../types';
 
 // Types for API requests
 interface CreateTaskRequest {
+  id?: string;
   projectId: string;
   title: string;
   description?: string;

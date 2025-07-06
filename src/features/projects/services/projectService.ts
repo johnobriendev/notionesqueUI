@@ -1,5 +1,5 @@
-import api from './api';
-import { Project } from '../types';
+import api from '../../../lib/api';
+import { Project } from '../../../types';
 
 // Types for API requests
 interface CreateProjectRequest {

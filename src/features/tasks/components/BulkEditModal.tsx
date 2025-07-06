@@ -1,10 +1,10 @@
 // src/components/modals/BulkEditModal.tsx
 import React, { useState } from 'react';
-import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { closeBulkEdit } from '../../features/ui/uiSlice';
-import { bulkUpdateTasksAsync } from '../../features/tasks/tasksSlice'; // FIXED: Only import async version
-import { selectCurrentProject } from '../../features/projects/projectsSlice';
-import { TaskStatus, TaskPriority } from '../../types';
+import { useAppSelector, useAppDispatch } from '../../../app/hooks';
+import { closeBulkEdit } from '../../../features/ui/uiSlice';
+import { bulkUpdateTasksAsync } from '../../../features/tasks/store/tasksSlice'; // FIXED: Only import async version
+import { selectCurrentProject } from '../../../features/projects/store/projectsSlice';
+import { TaskStatus, TaskPriority } from '../../../types';
 
 const BulkEditModal: React.FC = () => {
   const dispatch = useAppDispatch();

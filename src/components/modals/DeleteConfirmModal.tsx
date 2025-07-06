@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { closeDeleteConfirm } from '../../features/ui/uiSlice';
-import { deleteTaskAsync, deleteTasksAsync } from '../../features/tasks/tasksSlice';
-import { selectCurrentProject } from '../../features/projects/projectsSlice';
+import { deleteTaskAsync, deleteTasksAsync } from '../../features/tasks/store/tasksSlice';
+import { selectCurrentProject } from '../../features/projects/store/projectsSlice';
 
 const DeleteConfirmModal: React.FC = () => {
   const dispatch = useAppDispatch();

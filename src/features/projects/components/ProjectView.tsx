@@ -1,16 +1,16 @@
 // src/components/project/ProjectView.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { fetchProject, selectCurrentProject, setCurrentProject } from '../../features/projects/projectsSlice';
-import { fetchTasks } from '../../features/tasks/tasksSlice';
-import { closeTaskDetail } from '../../features/ui/uiSlice';
+import { useAppSelector, useAppDispatch } from '../../../app/hooks';
+import { fetchProject, selectCurrentProject, setCurrentProject } from '../store/projectsSlice';
+import { fetchTasks } from '../../tasks/store/tasksSlice';
+import { closeTaskDetail } from '../../ui/uiSlice';
 import { ActionCreators } from 'redux-undo'; // ADD THIS IMPORT
-import { clearUndoHistory } from '../../middleware/undoMiddleware'; // ADD THIS IMPORT
-import Header from '../layout/Header';
-import ListView from '../views/ListView';
-import KanbanView from '../views/KanbanView';
-import TaskDetailView from '../task/TaskDetailVIew';
+//import { clearUndoHistory } from '../../middleware/undoMiddleware'; // ADD THIS IMPORT
+import Header from '../../../components/layout/Header';
+import ListView from '../../../views/ListView';
+import KanbanView from '../../../views/KanbanView';
+import TaskDetailView from '../../tasks/components/TaskDetailVIew';
 
 const ProjectView: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -63,8 +63,8 @@ const ProjectView: React.FC = () => {
         
         if (isMounted) {
           // CLEAR UNDO HISTORY WHEN SWITCHING PROJECTS
-          clearUndoHistory(); // Clear custom middleware history
-          dispatch(ActionCreators.clearHistory()); // Clear redux-undo history
+          //clearUndoHistory(); // Clear custom middleware history
+          //dispatch(ActionCreators.clearHistory()); // Clear redux-undo history
           
           dispatch(setCurrentProject(project));
           await dispatch(fetchTasks(projectId)).unwrap();

@@ -2,19 +2,19 @@
 import React, { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
-import ProjectDashboard from './components/dashboard/ProjectDashboard';
+import ProjectDashboard from './features/projects/components/ProjectDashboard';
 import Header from './components/layout/Header';
-import ListView from './components/views/ListView';
-import KanbanView from './components/views/KanbanView';
-import TaskModal from './components/modals/TaskModal';
-import BulkEditModal from './components/modals/BulkEditModal';
+import ListView from './views/ListView';
+import KanbanView from './views/KanbanView';
+import TaskModal from './features/tasks/components/TaskModal';
+import BulkEditModal from './features/tasks/components/BulkEditModal';
 import DeleteConfirmModal from './components/modals/DeleteConfirmModal';
-import TaskDetailView from './components/task/TaskDetailVIew';
+import TaskDetailView from './features/tasks/components/TaskDetailVIew';
 import { closeTaskDetail } from './features/ui/uiSlice';
 import { useAppSelector, useAppDispatch } from './app/hooks';
 import AuthLayout from './components/layout/AuthLayout';
-import ProjectView from './components/project/ProjectView';
-import WelcomePage from './components/auth/WelcomePage';
+import ProjectView from './features/projects/components/ProjectView';
+import WelcomePage from './views/WelcomePage';
 
 
 // Root layout that includes modals which are shared across routes

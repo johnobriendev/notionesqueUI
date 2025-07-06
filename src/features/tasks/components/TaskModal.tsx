@@ -1,10 +1,10 @@
 //src/components/modals/TaskModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { closeTaskModal } from '../../features/ui/uiSlice';
-import { createTaskAsync, updateTaskAsync } from '../../features/tasks/tasksSlice';
-import { selectCurrentProject } from '../../features/projects/projectsSlice';
-import { Task, TaskStatus, TaskPriority } from '../../types';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
+import { closeTaskModal } from '../../../features/ui/uiSlice';
+import { createTaskAsync, updateTaskAsync } from '../../../features/tasks/store/tasksSlice';
+import { selectCurrentProject } from '../../../features/projects/store/projectsSlice';
+import { Task, TaskStatus, TaskPriority } from '../../../types';
 import { useNavigate } from 'react-router-dom';
 
 

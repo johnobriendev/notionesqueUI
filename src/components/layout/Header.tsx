@@ -10,7 +10,7 @@ import {
   setFilterPriority
 } from '../../features/ui/uiSlice';
 import { ViewMode, TaskStatus, TaskPriority } from '../../types';
-import HistoryControls from '../common/HistoryControls';
+import HistoryControls from '../../features/ui/components/HistoryControls';
 import { useAuth0 } from '@auth0/auth0-react';
 
 interface HeaderProps {

@@ -1,6 +1,6 @@
 // src/components/dashboard/ProjectDashboard.tsx
 import React, { useEffect, useState } from 'react';
-import { useAppSelector, useAppDispatch } from '../../app/hooks';
+import { useAppSelector, useAppDispatch } from '../../../app/hooks';
 import { 
   fetchProjects, 
   selectAllProjects, 
@@ -10,11 +10,11 @@ import {
   createProject,
   updateProject,
   deleteProject,
-} from '../../features/projects/projectsSlice';
+} from '../store/projectsSlice';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
-import { Project } from '../../types';
-import DashboardHeader from './DashboardHeader';
+import { Project } from '../../../types';
+import DashboardHeader from '../../../components/layout/DashboardHeader';
 
 // Dashboard component with modern design patterns
 const ProjectDashboard: React.FC = () => {

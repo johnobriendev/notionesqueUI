@@ -1,8 +1,8 @@
 import React from 'react';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { openDeleteConfirm, openTaskModal } from '../../features/ui/uiSlice';
-import { selectCurrentProject } from '../../features/projects/projectsSlice';
-import { Task, TaskStatus, TaskPriority } from '../../types';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
+import { openDeleteConfirm, openTaskModal } from '../../../features/ui/uiSlice';
+import { selectCurrentProject } from '../../../features/projects/store/projectsSlice';
+import { Task, TaskStatus, TaskPriority } from '../../../types';
 
 interface TaskDetailViewProps {
   task: Task;

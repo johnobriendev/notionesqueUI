@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Project, ProjectsState } from '../../types';
-import projectService from '../../services/projectService';
+import { Project, ProjectsState } from '../../../types';
+import projectService from '../services/projectService';
 
 // Initial state for the projects slice
 const initialState: ProjectsState = {
