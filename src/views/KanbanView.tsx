@@ -2,15 +2,12 @@
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { openTaskModal, openTaskDetail, openDeleteConfirm } from '../features/ui/uiSlice';
-import {
-  updateTaskPriorityAsync,
-  reorderTasksAsync,
-  createTaskAsync,
-  selectTasksByPriority
-} from '../features/tasks/store/tasksSlice';
+import { openTaskModal, openTaskDetail, openDeleteConfirm } from '../features/ui/store/uiSlice';
+import { selectTasksByPriority } from '../features/tasks/store/tasksSlice';
 import { selectCurrentProject } from '../features/projects/store/projectsSlice';
 import { TaskPriority, TaskStatus, Task } from '../types';
+import { executeCommand } from '../features/commands/store/commandSlice';
+import { createTaskCommand, updateTaskPriorityCommand, reorderTasksCommand } from '../features/commands/taskCommands';
 
 const KanbanView: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -34,25 +31,25 @@ const KanbanView: React.FC = () => {
 
   const handleDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
-    
+
     // Dropped outside a droppable area
     if (!destination) return;
-    
+
     // Dropped in the same position
     if (
       source.droppableId === destination.droppableId &&
       source.index === destination.index
     ) return;
-    
+
     if (!currentProject) return;
-    
+
     // Get the priority from the droppable ID (column ID)
     const sourcePriority = source.droppableId as TaskPriority;
     const destinationPriority = destination.droppableId as TaskPriority;
-    
+
     // Get the task ID from the draggable ID
     const taskId = result.draggableId;
-    
+
     console.log('🎯 DRAG END:', {
       sourcePriority,
       destinationPriority,
@@ -60,50 +57,53 @@ const KanbanView: React.FC = () => {
       sourceIndex: source.index,
       destinationIndex: destination.index
     });
-    
-    // ✅ FIXED: Single dispatch logic - no duplicates!
-    if (sourcePriority !== destinationPriority) {
-      // Moving between columns - update priority
-      console.log('🔄 Moving between columns');
-      try {
-        await dispatch(updateTaskPriorityAsync({
+
+    try {
+      if (sourcePriority !== destinationPriority) {
+        // 🎯 UPDATED: Moving between columns - use updateTaskPriorityCommand
+        console.log('🔄 Moving between columns - using command pattern');
+
+        const command = updateTaskPriorityCommand({
           projectId: currentProject.id,
           taskId: taskId,
           priority: destinationPriority,
           destinationIndex: destination.index
-        })).unwrap();
-        console.log('✅ Priority update success');
-      } catch (error) {
-        console.error('❌ Priority update failed:', error);
-      }
-    } else {
-      // Reordering within the same column
-      console.log('🔄 Reordering within column');
-      const columnTasks = tasksByPriority[sourcePriority];
-      const reorderedTasks = Array.from(columnTasks);
-      
-      // Remove the task from its old position
-      const [movedTask] = reorderedTasks.splice(source.index, 1);
-      
-      // Insert the task at its new position
-      reorderedTasks.splice(destination.index, 0, movedTask);
-      
-      // Create an array of task IDs in their new order
-      const newOrder = reorderedTasks.map(task => task.id);
-      
-      try {
-        await dispatch(reorderTasksAsync({
+        });
+
+        await dispatch(executeCommand(command)).unwrap();
+        console.log('✅ Priority update command executed successfully');
+
+      } else {
+        // 🎯 UPDATED: Reordering within the same column - use reorderTasksCommand
+        console.log('🔄 Reordering within column - using command pattern');
+
+        const columnTasks = tasksByPriority[sourcePriority];
+        const reorderedTasks = Array.from(columnTasks);
+
+        // Remove the task from its old position
+        const [movedTask] = reorderedTasks.splice(source.index, 1);
+
+        // Insert the task at its new position
+        reorderedTasks.splice(destination.index, 0, movedTask);
+
+        // Create an array of task IDs in their new order
+        const newOrder = reorderedTasks.map(task => task.id);
+
+        const command = reorderTasksCommand({
           projectId: currentProject.id,
           priority: sourcePriority,
           taskIds: newOrder
-        })).unwrap();
-        console.log('✅ Reorder success');
-      } catch (error) {
-        console.error('❌ Reorder failed:', error);
+        });
+
+        await dispatch(executeCommand(command)).unwrap();
+        console.log('✅ Reorder command executed successfully');
       }
+
+    } catch (error) {
+      console.error('❌ Drag & drop command failed:', error);
+      // The command system will handle the error state
+      // The UI should show an error message or revert the optimistic update
     }
-    
-    
   };
 
   // Handle showing the task input for a specific column
@@ -130,14 +130,20 @@ const KanbanView: React.FC = () => {
     }
 
     try {
-      await dispatch(createTaskAsync({
+      // 🎯 UPDATED: Use createTaskCommand instead of direct thunk
+      console.log('🎯 Creating CREATE command for Kanban quick-add:', title);
+
+      const command = createTaskCommand({
         projectId: currentProject.id,
         title,
         description: '',
         status: 'not started',
         priority,
         customFields: {}
-      })).unwrap();
+      });
+
+      await dispatch(executeCommand(command)).unwrap();
+      console.log('✅ Kanban quick-add command executed successfully');
 
       // Reset the input on success
       setNewTaskInputs(prev => ({
@@ -146,7 +152,7 @@ const KanbanView: React.FC = () => {
       }));
       setActiveInputColumn(null);
     } catch (error) {
-      console.error('Failed to create task:', error);
+      console.error('❌ Kanban quick-add command failed:', error);
     }
   };
 

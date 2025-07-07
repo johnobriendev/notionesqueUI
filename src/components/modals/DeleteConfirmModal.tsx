@@ -1,7 +1,7 @@
 // src/components/modals/DeleteConfirmModal.tsx
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { closeDeleteConfirm } from '../../features/ui/uiSlice';
+import { closeDeleteConfirm } from '../../features/ui/store/uiSlice';
 import { deleteTaskAsync, deleteTasksAsync } from '../../features/tasks/store/tasksSlice';
 import { selectCurrentProject } from '../../features/projects/store/projectsSlice';
 

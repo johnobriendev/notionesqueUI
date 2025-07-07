@@ -1,7 +1,7 @@
 // src/components/modals/BulkEditModal.tsx
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../app/hooks';
-import { closeBulkEdit } from '../../../features/ui/uiSlice';
+import { closeBulkEdit } from '../../ui/store/uiSlice';
 import { bulkUpdateTasksAsync } from '../../../features/tasks/store/tasksSlice'; // FIXED: Only import async version
 import { selectCurrentProject } from '../../../features/projects/store/projectsSlice';
 import { TaskStatus, TaskPriority } from '../../../types';

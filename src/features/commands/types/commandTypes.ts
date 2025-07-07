@@ -1,13 +1,14 @@
 //src/features/commands/types/commandTypes.ts
 
-import type { AppDispatch } from '../../../app/store';
+
+import type { AppDispatch, RootState } from '../../../app/store';
 
 // Base command interface - every undoable operation implements this
 export interface UndoableCommand {
   type: string;                                    // Command type identifier
   description: string;                             // Human-readable description
-  execute: (dispatch: any, getState: () => any) => Promise<void>;  // How to perform the action
-  undo: (dispatch: any, getState: () => any) => Promise<void>;     // How to reverse the action
+  execute: (dispatch: any, getState: () => RootState) => Promise<void>;  // How to perform the action
+  undo: (dispatch: any, getState: () => RootState) => Promise<void>;     // How to reverse the action
 }
 
 // Command history state managed by Redux

@@ -8,7 +8,7 @@ import {
   setSearchTerm,
   setFilterStatus,
   setFilterPriority
-} from '../../features/ui/uiSlice';
+} from '../../features/ui/store/uiSlice';
 import { ViewMode, TaskStatus, TaskPriority } from '../../types';
 import HistoryControls from '../../features/ui/components/HistoryControls';
 import { useAuth0 } from '@auth0/auth0-react';

@@ -4,9 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../app/hooks';
 import { fetchProject, selectCurrentProject, setCurrentProject } from '../store/projectsSlice';
 import { fetchTasks } from '../../tasks/store/tasksSlice';
-import { closeTaskDetail } from '../../ui/uiSlice';
-import { ActionCreators } from 'redux-undo'; // ADD THIS IMPORT
-//import { clearUndoHistory } from '../../middleware/undoMiddleware'; // ADD THIS IMPORT
+import { closeTaskDetail } from '../../ui/store/uiSlice';
+import { clearHistory } from '../../commands/store/commandSlice'; // Import command system
 import Header from '../../../components/layout/Header';
 import ListView from '../../../views/ListView';
 import KanbanView from '../../../views/KanbanView';
@@ -23,7 +22,7 @@ const ProjectView: React.FC = () => {
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const isTaskDetailOpen = useAppSelector(state => state.ui.isTaskDetailOpen);
   const viewingTaskId = useAppSelector(state => state.ui.viewingTaskId);
-  const tasks = useAppSelector(state => state.tasks.present.items);
+  const tasks = useAppSelector(state => state.tasks.items);
   
   // Find the task being viewed, if any
   const taskBeingViewed = viewingTaskId 
@@ -63,8 +62,8 @@ const ProjectView: React.FC = () => {
         
         if (isMounted) {
           // CLEAR UNDO HISTORY WHEN SWITCHING PROJECTS
-          //clearUndoHistory(); // Clear custom middleware history
-          //dispatch(ActionCreators.clearHistory()); // Clear redux-undo history
+          
+          dispatch(clearHistory()); 
           
           dispatch(setCurrentProject(project));
           await dispatch(fetchTasks(projectId)).unwrap();

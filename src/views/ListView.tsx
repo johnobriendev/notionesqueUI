@@ -1,7 +1,7 @@
 // src/components/views/ListView.tsx
 import React, {useState, useEffect} from 'react';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { openTaskModal, setSortConfig, openTaskDetail, openDeleteConfirm, openBulkEdit, selectIsDeleteConfirmOpen } from '../features/ui/uiSlice';
+import { openTaskModal, setSortConfig, openTaskDetail, openDeleteConfirm, openBulkEdit, selectIsDeleteConfirmOpen } from '../features/ui/store/uiSlice';
 import { selectCurrentProject } from '../features/projects/store/projectsSlice';
 import { Task, SortField, SortDirection, TaskStatus, TaskPriority } from '../types';
 

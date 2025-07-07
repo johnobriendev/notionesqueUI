@@ -1,4 +1,4 @@
-// src/services/api.ts
+// src/lib/api.ts
 
 import axios, { AxiosError } from 'axios';
 import { User } from '@auth0/auth0-react';

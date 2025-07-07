@@ -1,26 +1,27 @@
 //src/components/modals/TaskModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { closeTaskModal } from '../../../features/ui/uiSlice';
+import { closeTaskModal } from '../../ui/store/uiSlice';
 import { createTaskAsync, updateTaskAsync } from '../../../features/tasks/store/tasksSlice';
 import { selectCurrentProject } from '../../../features/projects/store/projectsSlice';
 import { Task, TaskStatus, TaskPriority } from '../../../types';
 import { useNavigate } from 'react-router-dom';
-
+import { executeCommand } from '../../commands/store/commandSlice';
+import { createTaskCommand, updateTaskCommand } from '../../commands/taskCommands';
 
 const TaskModal: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const isOpen = useAppSelector(state => state.ui.isTaskModalOpen);
   const editingTaskId = useAppSelector(state => state.ui.editingTaskId);
-  const tasks = useAppSelector(state => state.tasks.present.items as Task[]);
+  const tasks = useAppSelector(state => state.tasks.items as Task[]);
   const currentProject = useAppSelector(selectCurrentProject);
 
-  
+
   // Determine if we're editing an existing task
   const isEditing = Boolean(editingTaskId);
   const editingTask = editingTaskId ? tasks.find(task => task.id === editingTaskId) : null;
-  
+
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState<string>('');
@@ -29,12 +30,12 @@ const TaskModal: React.FC = () => {
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // For adding custom fields
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldValue, setNewFieldValue] = useState('');
-  
+
   // Reset form when modal opens/closes or editingTaskId changes
   useEffect(() => {
     if (isOpen) {
@@ -58,18 +59,18 @@ const TaskModal: React.FC = () => {
       setError(null);
     }
   }, [isOpen, isEditing, editingTask]);
-  
+
   // Close the modal
   const handleClose = () => {
     dispatch(closeTaskModal());
   };
-  
+
   // Submit the form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim()) return; // Validate title
-    
+
     // Ensure we have a current project
     if (!currentProject?.id) {
       setError('No project selected. Please select a project first.');
@@ -78,14 +79,16 @@ const TaskModal: React.FC = () => {
       navigate('/');
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       if (isEditing && editingTask) {
-        // Update existing task
-        await dispatch(updateTaskAsync({
+        // 🎯 UPDATED: Use updateTaskCommand instead of direct thunk
+        console.log('🎯 Creating UPDATE command for task:', editingTask.id);
+
+        const command = updateTaskCommand({
           projectId: editingTask.projectId,
           taskId: editingTask.id,
           updates: {
@@ -95,29 +98,38 @@ const TaskModal: React.FC = () => {
             priority,
             customFields
           }
-        })).unwrap();
+        });
+
+        await dispatch(executeCommand(command)).unwrap();
+        console.log('✅ UPDATE command executed successfully');
+
       } else {
-        // Create new task
-        await dispatch(createTaskAsync({
+        // 🎯 UPDATED: Use createTaskCommand instead of direct thunk
+        console.log('🎯 Creating CREATE command for new task:', title);
+
+        const command = createTaskCommand({
           projectId: currentProject.id,
           title,
           description,
           status,
           priority,
           customFields
-        })).unwrap();
+        });
+
+        await dispatch(executeCommand(command)).unwrap();
+        console.log('✅ CREATE command executed successfully');
       }
-      
+
       // Close the modal on success
       handleClose();
     } catch (err) {
       setError('Failed to save task. Please try again.');
-      console.error('Task save error:', err);
+      console.error('❌ Command execution failed:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   // Add a custom field
   const handleAddCustomField = () => {
     if (newFieldName.trim() && newFieldValue.trim()) {
@@ -129,7 +141,7 @@ const TaskModal: React.FC = () => {
       setNewFieldValue('');
     }
   };
-  
+
   // Remove a custom field
   const handleRemoveCustomField = (fieldName: string) => {
     setCustomFields(prev => {
@@ -143,12 +155,12 @@ const TaskModal: React.FC = () => {
   const toggleCustomFields = () => {
     setShowCustomFields(!showCustomFields);
   };
-  
+
   // If modal is closed, don't render anything
   if (!isOpen) return null;
-  
+
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={(e) => {
         // Only close if the click is on the backdrop, not on the modal itself
@@ -167,7 +179,7 @@ const TaskModal: React.FC = () => {
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           {/* Task Title */}
           <div className="mb-4">
@@ -182,7 +194,7 @@ const TaskModal: React.FC = () => {
               required
             />
           </div>
-          
+
           {/* Task Description */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -195,7 +207,7 @@ const TaskModal: React.FC = () => {
               rows={3}
             />
           </div>
-          
+
           {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
@@ -212,7 +224,7 @@ const TaskModal: React.FC = () => {
                 <option value="completed">Completed</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Priority
@@ -230,7 +242,7 @@ const TaskModal: React.FC = () => {
               </select>
             </div>
           </div>
-          
+
           {/* Custom Fields Collapsible Section */}
           <div className="mb-4 border rounded-md overflow-hidden">
             <button
@@ -250,7 +262,7 @@ const TaskModal: React.FC = () => {
                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
-            
+
             {/* Collapsible content */}
             {showCustomFields && (
               <div className="p-4 border-t">
@@ -274,7 +286,7 @@ const TaskModal: React.FC = () => {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Add new custom field - using vertical layout for more space */}
                 <div className="mt-3">
                   <div className="flex flex-col space-y-2">
@@ -303,11 +315,10 @@ const TaskModal: React.FC = () => {
                     type="button"
                     onClick={handleAddCustomField}
                     disabled={!newFieldName.trim() || !newFieldValue.trim()}
-                    className={`mt-3 w-full px-4 py-2 rounded-md transition-colors ${
-                      !newFieldName.trim() || !newFieldValue.trim()
+                    className={`mt-3 w-full px-4 py-2 rounded-md transition-colors ${!newFieldName.trim() || !newFieldValue.trim()
                         ? 'bg-blue-300 cursor-not-allowed'
                         : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    }`}
+                      }`}
                   >
                     Add Field
                   </button>
@@ -315,7 +326,7 @@ const TaskModal: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           {/* Form Actions */}
           <div className="flex justify-end space-x-3 mt-6">
             <button
@@ -328,11 +339,10 @@ const TaskModal: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                isSubmitting || !title.trim()
+              className={`px-4 py-2 rounded-md transition-colors ${isSubmitting || !title.trim()
                   ? 'bg-blue-300 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
+                }`}
             >
               {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Create'}
             </button>

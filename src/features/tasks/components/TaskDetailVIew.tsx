@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { openDeleteConfirm, openTaskModal } from '../../../features/ui/uiSlice';
+import { openDeleteConfirm, openTaskModal } from '../../ui/store/uiSlice';
 import { selectCurrentProject } from '../../../features/projects/store/projectsSlice';
 import { Task, TaskStatus, TaskPriority } from '../../../types';
 

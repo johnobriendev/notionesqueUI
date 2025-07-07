@@ -2,15 +2,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { UndoableCommand, CommandHistoryState } from '../types/commandTypes';
-
-// Define the root state type to match your actual store structure
-type RootState = {
-  tasks: any;
-  tasksMeta: any;
-  ui: any;
-  projects: any;
-  commands: CommandHistoryState;
-};
+import type { RootState, AppDispatch } from '../../../app/store'; // Import the correct types
 
 // Initial state for command history
 const initialState: CommandHistoryState = {
@@ -19,11 +11,11 @@ const initialState: CommandHistoryState = {
   isExecuting: false
 };
 
-// Async thunk to execute a command
+// Async thunk to execute a command - using proper types
 export const executeCommand = createAsyncThunk<
   UndoableCommand,
   UndoableCommand,
-  { state: RootState }
+  { state: RootState; dispatch: AppDispatch }
 >(
   'commands/executeCommand',
   async (command: UndoableCommand, { dispatch, getState, rejectWithValue }) => {
@@ -38,11 +30,11 @@ export const executeCommand = createAsyncThunk<
   }
 );
 
-// Async thunk to undo the last command
+// Async thunk to undo the last command - using proper types
 export const undoLastCommand = createAsyncThunk<
   UndoableCommand,
   void,
-  { state: RootState }
+  { state: RootState; dispatch: AppDispatch }
 >(
   'commands/undoLastCommand',
   async (_, { getState, dispatch, rejectWithValue }) => {
@@ -66,11 +58,11 @@ export const undoLastCommand = createAsyncThunk<
   }
 );
 
-// Async thunk to redo the last undone command
+// Async thunk to redo the last undone command - using proper types
 export const redoLastCommand = createAsyncThunk<
   UndoableCommand,
   void,
-  { state: RootState }
+  { state: RootState; dispatch: AppDispatch }
 >(
   'commands/redoLastCommand',
   async (_, { getState, dispatch, rejectWithValue }) => {
@@ -174,28 +166,28 @@ export const { clearHistory, clearRedoStack } = commandSlice.actions;
 // Export reducer
 export default commandSlice.reducer;
 
-// Selectors
-export const selectCanUndo = (state: { commands: CommandHistoryState }) => 
+// Selectors - using proper RootState type
+export const selectCanUndo = (state: RootState) => 
   state.commands.undoStack.length > 0;
 
-export const selectCanRedo = (state: { commands: CommandHistoryState }) => 
+export const selectCanRedo = (state: RootState) => 
   state.commands.redoStack.length > 0;
 
-export const selectUndoStackLength = (state: { commands: CommandHistoryState }) => 
+export const selectUndoStackLength = (state: RootState) => 
   state.commands.undoStack.length;
 
-export const selectRedoStackLength = (state: { commands: CommandHistoryState }) => 
+export const selectRedoStackLength = (state: RootState) => 
   state.commands.redoStack.length;
 
-export const selectIsExecutingCommand = (state: { commands: CommandHistoryState }) => 
+export const selectIsExecutingCommand = (state: RootState) => 
   state.commands.isExecuting;
 
-export const selectLastUndoCommand = (state: { commands: CommandHistoryState }) => {
+export const selectLastUndoCommand = (state: RootState) => {
   const { undoStack } = state.commands;
   return undoStack.length > 0 ? undoStack[undoStack.length - 1] : null;
 };
 
-export const selectLastRedoCommand = (state: { commands: CommandHistoryState }) => {
+export const selectLastRedoCommand = (state: RootState) => {
   const { redoStack } = state.commands;
   return redoStack.length > 0 ? redoStack[redoStack.length - 1] : null;
 };

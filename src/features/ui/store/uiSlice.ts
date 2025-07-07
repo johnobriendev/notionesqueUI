@@ -9,7 +9,7 @@ import {
   FilterConfig,
   TaskStatus, 
   TaskPriority 
-} from '../../types';
+} from '../../../types';
 
 // Define the state structure for the UI slice
 interface UiState {

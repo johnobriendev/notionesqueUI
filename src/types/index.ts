@@ -68,13 +68,6 @@ export interface ProjectsState {
 }
 
 
-// Structure for the history state (from redux-undo)
-export interface StateWithHistory<T> {
-  past: T[];
-  present: T;
-  future: T[];
-}
-
 // UI state structure
 export interface UiState {
   viewMode: ViewMode;
@@ -93,9 +86,10 @@ export interface UiState {
   currentProjectId: string | null;
 }
 
-// Complete app state structure
-export interface RootState {
-  tasks: StateWithHistory<TasksState>;
-  ui: UiState;
-  projects: ProjectsState;
+
+export interface CommandHistoryState {
+  undoStack: any[]; 
+  redoStack: any[];
+  isExecuting: boolean;
 }
+
