@@ -5,7 +5,7 @@ import storage from 'redux-persist/lib/storage';
 import tasksReducer, {tasksMetaReducer} from '../features/tasks/store/tasksSlice';
 import uiReducer from '../features/ui/uiSlice';
 import projectsReducer from '../features/projects/store/projectsSlice';
-
+import commandsReducer from '../features/commands/store/commandSlice';
 
 
 
@@ -30,6 +30,7 @@ export const store = configureStore({
     tasksMeta: tasksMetaReducer, 
     ui: uiReducer, // UI state doesn't need to be persisted
     projects: persistReducer(projectsPersistConfig, projectsReducer) as any,
+    commands: commandsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
