@@ -1,4 +1,4 @@
-// src/components/views/KanbanView.tsx
+// src/views/KanbanView.tsx
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useAppSelector, useAppDispatch } from '../app/hooks';

@@ -1,9 +1,10 @@
-// src/components/modals/BulkEditModal.tsx
+// src/features/tasks/components/BulkEditModal.tsx
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../app/hooks';
 import { closeBulkEdit } from '../../ui/store/uiSlice';
-import { bulkUpdateTasksAsync } from '../../../features/tasks/store/tasksSlice'; // FIXED: Only import async version
 import { selectCurrentProject } from '../../../features/projects/store/projectsSlice';
+import { executeCommand } from '../../../features/commands/store/commandSlice';
+import { bulkUpdateTasksCommand } from '../../../features/commands/taskCommands';
 import { TaskStatus, TaskPriority } from '../../../types';
 
 const BulkEditModal: React.FC = () => {
@@ -24,7 +25,7 @@ const BulkEditModal: React.FC = () => {
   };
   
   // Submit the bulk edit
-  const handleSubmit = async (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!currentProject) {
@@ -41,22 +42,27 @@ const BulkEditModal: React.FC = () => {
     setError(null);
     
     try {
+      // 🎯 UPDATED: Use bulkUpdateTasksCommand instead of direct thunk
       const updates = editType === 'status' 
         ? { status } 
         : { priority };
       
-      // SIMPLIFIED: Only dispatch async action (no double dispatching)
-      await dispatch(bulkUpdateTasksAsync({
+      console.log('🎯 Creating BULK UPDATE command for', selectedTaskIds.length, 'tasks');
+      
+      const command = bulkUpdateTasksCommand({
         projectId: currentProject.id,
         taskIds: selectedTaskIds,
         updates
-      })).unwrap();
+      });
+      
+      await dispatch(executeCommand(command)).unwrap();
+      console.log('✅ Bulk update command executed successfully');
       
       // Close modal on success
       handleClose();
     } catch (err) {
+      console.error('❌ Bulk update command failed:', err);
       setError('Failed to update tasks. Please try again.');
-      console.error('Bulk update error:', err);
     } finally {
       setIsSubmitting(false);
     }

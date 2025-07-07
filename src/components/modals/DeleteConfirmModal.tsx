@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { closeDeleteConfirm } from '../../features/ui/store/uiSlice';
-import { deleteTaskAsync, deleteTasksAsync } from '../../features/tasks/store/tasksSlice';
 import { selectCurrentProject } from '../../features/projects/store/projectsSlice';
+import { executeCommand } from '../../features/commands/store/commandSlice';
+import { deleteTaskCommand, bulkDeleteTasksCommand } from '../../features/commands/taskCommands';
+
 
 const DeleteConfirmModal: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -35,24 +37,35 @@ const DeleteConfirmModal: React.FC = () => {
 
     try {
       if (isMultiDelete) {
-        // Optimistic update
-        await dispatch(deleteTasksAsync({
+        // 🎯 UPDATED: Use bulkDeleteTasksCommand instead of direct thunk
+        console.log('🎯 Creating BULK DELETE command for', deletingTaskIds.length, 'tasks');
+        
+        const command = bulkDeleteTasksCommand({
           projectId: currentProject.id,
           taskIds: deletingTaskIds
-        })).unwrap();
+        });
+        
+        await dispatch(executeCommand(command)).unwrap();
+        console.log('✅ Bulk delete command executed successfully');
+        
       } else if (deletingTaskId) {
-        // SIMPLIFIED: Only dispatch async action (no double dispatching)
-        await dispatch(deleteTaskAsync({
+        // 🎯 UPDATED: Use deleteTaskCommand instead of direct thunk
+        console.log('🎯 Creating DELETE command for task:', deletingTaskId);
+        
+        const command = deleteTaskCommand({
           projectId: currentProject.id,
           taskId: deletingTaskId
-        })).unwrap();
+        });
+        
+        await dispatch(executeCommand(command)).unwrap();
+        console.log('✅ Delete command executed successfully');
       }
 
       // Close modal on success
       handleClose();
     } catch (err) {
+      console.error('❌ Delete command failed:', err);
       setError('Failed to delete task(s). Please try again.');
-      console.error('Delete error:', err);
     } finally {
       setIsDeleting(false);
     }

@@ -1,13 +1,14 @@
-// src/components/views/ListView.tsx
-import React, {useState, useEffect} from 'react';
+// src/views/ListView.tsx
+import React, { useState, useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { openTaskModal, setSortConfig, openTaskDetail, openDeleteConfirm, openBulkEdit, selectIsDeleteConfirmOpen } from '../features/ui/store/uiSlice';
 import { selectCurrentProject } from '../features/projects/store/projectsSlice';
+import { selectSortedFilteredTasks } from '../features/tasks/store/tasksSlice';
 import { Task, SortField, SortDirection, TaskStatus, TaskPriority } from '../types';
 
 const ListView: React.FC = () => {
   const dispatch = useAppDispatch();
-  const tasks = useAppSelector(state => state.tasks.present.items as Task[]);
+  const tasks = useAppSelector(selectSortedFilteredTasks);
   const filterConfig = useAppSelector(state => state.ui.filterConfig);
   const sortConfig = useAppSelector(state => state.ui.sortConfig);
   const isDeleteConfirmOpen = useAppSelector(selectIsDeleteConfirmOpen);
@@ -16,15 +17,15 @@ const ListView: React.FC = () => {
   // State for selected tasks (for bulk actions)
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
 
-   // State for pagination
-   const [currentPage, setCurrentPage] = useState(1);
-   const tasksPerPage = 10;
+  // State for pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 10;
 
-   // Reset selections when tasks change (due to deletion, etc.)
+  // Reset selections when tasks change (due to deletion, etc.)
   useEffect(() => {
     // Create a set of existing task IDs
     const taskIdsSet = new Set(tasks.map(task => task.id));
-    
+
     // Keep only the selections that still exist in tasks
     const updatedSelections = new Set<string>();
     selectedTaskIds.forEach(id => {
@@ -32,7 +33,7 @@ const ListView: React.FC = () => {
         updatedSelections.add(id);
       }
     });
-    
+
     setSelectedTaskIds(updatedSelections);
   }, [tasks]);
 
@@ -43,75 +44,24 @@ const ListView: React.FC = () => {
     }
   }, [isDeleteConfirmOpen]);
 
-  
+
   // Filter and sort tasks based on current configuration and current project
- const filteredAndSortedTasks = React.useMemo(() => {
-    // Check if tasks is an array before filtering
-  if (!Array.isArray(tasks)) {
-    console.error("Tasks is not an array:", tasks);
-    return [];
-  }
-  
-  // First, filter the tasks
-    let result = tasks.filter(task => {
-      // Filter by project
-      if (currentProject && task.projectId !== currentProject.id) {
-        return false;
-      }
-      
-      // Filter by status
-      if (filterConfig.status !== 'all' && task.status !== filterConfig.status) {
-        return false;
-      }
-      
-      // Filter by priority
-      if (filterConfig.priority !== 'all' && task.priority !== filterConfig.priority) {
-        return false;
-      }
-      
-      // Filter by search term
-      if (filterConfig.searchTerm && !task.title.toLowerCase().includes(filterConfig.searchTerm.toLowerCase())) {
-        return false;
-      }
-      
-      return true;
-    });
-    
-    // Then, sort the filtered tasks
-    result.sort((a, b) => {
-      const { field, direction } = sortConfig;
-      const multiplier = direction === 'asc' ? 1 : -1;
-      
-      // Handle date fields
-      if (field === 'createdAt' || field === 'updatedAt') {
-        return multiplier * (new Date(a[field]).getTime() - new Date(b[field]).getTime());
-      }
-      
-      // Handle string fields
-      if (typeof a[field] === 'string' && typeof b[field] === 'string') {
-        return multiplier * a[field].localeCompare(b[field] as string);
-      }
-      
-      return 0;
-    });
-    
-    return result;
-  }, [tasks, filterConfig, sortConfig, currentProject]);
+  const filteredAndSortedTasks = tasks;
 
   useEffect(() => {
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [filterConfig]);
+  }, [tasks]);
 
   // Get paginated tasks
   const paginatedTasks = React.useMemo(() => {
     const startIndex = (currentPage - 1) * tasksPerPage;
     return filteredAndSortedTasks.slice(startIndex, startIndex + tasksPerPage);
   }, [filteredAndSortedTasks, currentPage, tasksPerPage]);
-  
+
   // Calculate total pages
   const totalPages = Math.ceil(filteredAndSortedTasks.length / tasksPerPage);
-  
+
   // Handle sorting
   const handleSort = (field: SortField) => {
     if (sortConfig.field === field) {
@@ -123,29 +73,29 @@ const ListView: React.FC = () => {
       dispatch(setSortConfig({ field, direction: 'desc' }));
     }
   };
-  
+
   // Get sort direction indicator
   const getSortIndicator = (field: SortField) => {
     if (sortConfig.field !== field) return null;
     return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
-  
+
   // Handle edit task
   const handleEditTask = (task: Task) => {
     dispatch(openTaskModal(task.id));
   };
-  
+
   // Handle delete task
   const handleDeleteTask = (id: string) => {
     dispatch(openDeleteConfirm(id));
   };
-  
+
   // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedTaskIds.size === 0) return;
     dispatch(openDeleteConfirm(Array.from(selectedTaskIds)));
   };
-  
+
   // Toggle task selection
   const toggleTaskSelection = (id: string) => {
     const newSelection = new Set(selectedTaskIds);
@@ -156,7 +106,7 @@ const ListView: React.FC = () => {
     }
     setSelectedTaskIds(newSelection);
   };
-  
+
   // Toggle all selection
   const toggleSelectAll = () => {
     if (selectedTaskIds.size === paginatedTasks.length) {
@@ -169,7 +119,7 @@ const ListView: React.FC = () => {
       setSelectedTaskIds(newSelection);
     }
   };
-  
+
   // Style classes for status badges
   const getStatusBadgeClass = (status: TaskStatus) => {
     switch (status) {
@@ -181,7 +131,7 @@ const ListView: React.FC = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
   // Style classes for priority badges
   const getPriorityBadgeClass = (priority: TaskPriority) => {
     switch (priority) {
@@ -197,12 +147,12 @@ const ListView: React.FC = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
   // Pagination navigation
   const handlePageChange = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
-  
+
   // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -254,7 +204,7 @@ const ListView: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {/* Task table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -268,25 +218,25 @@ const ListView: React.FC = () => {
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('title')}
               >
                 Title {getSortIndicator('title')}
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('status')}
               >
                 Status {getSortIndicator('status')}
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('priority')}
               >
                 Priority {getSortIndicator('priority')}
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('updatedAt')}
               >
@@ -309,9 +259,9 @@ const ListView: React.FC = () => {
                   />
                 </td>
                 <td className="px-6 py-4">
-                  <div 
-                  className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                  onClick={() => dispatch(openTaskDetail(task.id))}
+                  <div
+                    className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
+                    onClick={() => dispatch(openTaskDetail(task.id))}
                   >
                     {task.title}
                   </div>
@@ -362,7 +312,7 @@ const ListView: React.FC = () => {
                 </td>
               </tr>
             ))}
-            
+
             {paginatedTasks.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
@@ -373,7 +323,7 @@ const ListView: React.FC = () => {
           </tbody>
         </table>
       </div>
-      
+
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
@@ -382,11 +332,10 @@ const ListView: React.FC = () => {
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                currentPage === 1 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
             >
               Previous
             </button>
@@ -396,16 +345,15 @@ const ListView: React.FC = () => {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                currentPage === totalPages 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${currentPage === totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
             >
               Next
             </button>
           </div>
-          
+
           {/* Desktop pagination */}
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
@@ -422,26 +370,24 @@ const ListView: React.FC = () => {
                 <button
                   onClick={() => handlePageChange(1)}
                   disabled={currentPage === 1}
-                  className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 text-sm font-medium ${
-                    currentPage === 1 
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                    : 'bg-white text-gray-500 hover:bg-gray-50'
-                  }`}
+                  className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 text-sm font-medium ${currentPage === 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
                 >
                   First
                 </button>
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`relative inline-flex items-center px-2 py-2 border border-gray-300 text-sm font-medium ${
-                    currentPage === 1 
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                    : 'bg-white text-gray-500 hover:bg-gray-50'
-                  }`}
+                  className={`relative inline-flex items-center px-2 py-2 border border-gray-300 text-sm font-medium ${currentPage === 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
                 >
                   Prev
                 </button>
-                
+
                 {/* Page numbers - show current page and adjacent pages */}
                 {Array.from(
                   { length: Math.min(5, totalPages) },
@@ -457,42 +403,39 @@ const ListView: React.FC = () => {
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          currentPage === pageNum
-                          ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === pageNum
+                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
                       >
                         {pageNum}
                       </button>
                     );
                   }
                 )}
-                
+
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`relative inline-flex items-center px-2 py-2 border border-gray-300 text-sm font-medium ${
-                    currentPage === totalPages 
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                    : 'bg-white text-gray-500 hover:bg-gray-50'
-                  }`}
+                  className={`relative inline-flex items-center px-2 py-2 border border-gray-300 text-sm font-medium ${currentPage === totalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
                 >
                   Next
                 </button>
                 <button
                   onClick={() => handlePageChange(totalPages)}
                   disabled={currentPage === totalPages}
-                  className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 text-sm font-medium ${
-                    currentPage === totalPages 
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                    : 'bg-white text-gray-500 hover:bg-gray-50'
-                  }`}
+                  className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 text-sm font-medium ${currentPage === totalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
                 >
                   Last
                 </button>
