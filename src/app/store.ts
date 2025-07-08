@@ -7,28 +7,33 @@ import uiReducer from '../features/ui/store/uiSlice';
 import projectsReducer from '../features/projects/store/projectsSlice';
 import commandsReducer from '../features/commands/store/commandSlice';
 
-// Use combineReducers to create the root reducer first
+
+
+const uiPersistConfig: PersistConfig<any> = {
+  key: 'ui',
+  storage,
+  whitelist: [
+    'currentProjectId',    // Just the ID, not the full project data
+    'viewMode',           // kanban vs list view preference
+    'theme',              // if you have theme preferences
+    'sidebarCollapsed',   // UI state preferences
+   
+  ],
+};
+
+
 const rootReducer = combineReducers({
   tasks: tasksReducer,
-  ui: uiReducer,
+  ui: persistReducer(uiPersistConfig, uiReducer),
   projects: projectsReducer,
   commands: commandsReducer,
 });
 
-// Define the persist config for specific slices
-const persistConfig: PersistConfig<ReturnType<typeof rootReducer>> = {
-  key: 'root',
-  storage,
-  whitelist: ['tasks', 'projects'], // Only persist tasks and projects, not ui or commands
-  blacklist: ['ui', 'commands']
-};
 
-// Create the persisted reducer
-const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 // Create the store with the persisted reducer
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -48,7 +53,7 @@ export const store = configureStore({
           'commands/redoLastCommand/rejected'
         ],
         // Also ignore command functions in the serialization check
-        iignoredActionsPaths: [
+        ignoredActionsPaths: [
           'payload.execute', 
           'payload.undo',
           'meta.arg.execute',
@@ -61,7 +66,12 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
+//  Helper function for clean logout
+export const clearPersistedState = () => {
+  persistor.purge();
+};
+
 // Export the proper types - this is crucial for TypeScript to understand our new structure
 export type AppStore = typeof store;
-export type RootState = ReturnType<typeof persistedReducer>;
+export type RootState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;
