@@ -15,8 +15,8 @@ const WelcomePage: React.FC = () => {
       {/* Navigation */}
       <nav className="pt-6 px-8 flex justify-between items-center">
         <div className="flex items-center">
-          <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl">N</div>
-          <span className="ml-2 text-xl font-semibold text-gray-900">Notionesque</span>
+          <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl">TW</div>
+          <span className="ml-2 text-xl font-semibold text-gray-900">ThoughtWeb</span>
         </div>
         <button
           onClick={() => loginWithRedirect()}
@@ -34,7 +34,7 @@ const WelcomePage: React.FC = () => {
             Create, organize, and <span className="text-blue-600">collaborate</span>
           </h1>
           <p className="mt-6 text-xl text-gray-600 max-w-xl">
-            A powerful task management tool inspired by Notion with Kanban and list views, custom fields, and project organization.
+            A powerful task management tool with Kanban and list views, custom fields, and project organization.
           </p>
           
           <div className="mt-10 flex flex-col sm:flex-row gap-4">
@@ -154,7 +154,7 @@ const WelcomePage: React.FC = () => {
             Ready to organize your workflow?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of users who are already boosting their productivity with Notionesque.
+            Join thousands of users who are already boosting their productivity with ThoughtWeb.
           </p>
           <button
             onClick={() => loginWithRedirect()}
@@ -171,10 +171,10 @@ const WelcomePage: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-6 md:mb-0">
               <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">N</div>
-              <span className="ml-2 text-lg font-semibold text-gray-900">Notionesque</span>
+              <span className="ml-2 text-lg font-semibold text-gray-900">ThoughtWeb</span>
             </div>
             <div className="text-sm text-gray-500">
-              © {new Date().getFullYear()} Notionesque. All rights reserved.
+              © {new Date().getFullYear()} ThoughtWeb. All rights reserved.
             </div>
           </div>
         </div>
