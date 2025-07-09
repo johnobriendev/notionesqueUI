@@ -1,9 +1,9 @@
 // src/components/dashboard/ProjectDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../app/hooks';
-import { 
-  fetchProjects, 
-  selectAllProjects, 
+import {
+  fetchProjects,
+  selectAllProjects,
   setCurrentProject,
   selectProjectsLoading,
   selectProjectsError,
@@ -15,6 +15,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { Project } from '../../../types';
 import DashboardHeader from '../../../components/layout/DashboardHeader';
+import { useAppAuth } from '../../../auth/AuthProvider';
+
 
 // Dashboard component with modern design patterns
 const ProjectDashboard: React.FC = () => {
@@ -24,6 +26,8 @@ const ProjectDashboard: React.FC = () => {
   const isLoading = useAppSelector(selectProjectsLoading);
   const error = useAppSelector(selectProjectsError);
   const { isAuthenticated } = useAuth0();
+  const { isAppReady } = useAppAuth();
+
 
   // State for project form
   const [isCreating, setIsCreating] = useState(false);
@@ -32,16 +36,13 @@ const ProjectDashboard: React.FC = () => {
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
 
-  // Fetch projects with delay to ensure auth is ready
-  useEffect(() => {
-    if (isAuthenticated) {
-      const timer = setTimeout(() => {
-        dispatch(fetchProjects());
-      }, 500);
-      
-      return () => clearTimeout(timer);
+  // Fetch projects after auth is ready
+   useEffect(() => {
+    if (isAuthenticated && isAppReady) {
+      console.log('App is ready, fetching projects');
+      dispatch(fetchProjects());
     }
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch, isAuthenticated, isAppReady]);
 
   // Form handling functions
   const handleOpenCreateForm = () => {
@@ -59,7 +60,7 @@ const ProjectDashboard: React.FC = () => {
     setProjectName(project.name);
     setProjectDescription(project.description || '');
   };
-  
+
   const handleCloseForm = () => {
     setIsCreating(false);
     setIsEditing(false);
@@ -67,11 +68,11 @@ const ProjectDashboard: React.FC = () => {
     setProjectName('');
     setProjectDescription('');
   };
-  
+
   // Project CRUD operations
   const handleCreateProject = () => {
     if (projectName.trim()) {
-      dispatch(createProject({ 
+      dispatch(createProject({
         name: projectName.trim(),
         description: projectDescription.trim() || undefined
       }))
@@ -86,7 +87,7 @@ const ProjectDashboard: React.FC = () => {
         });
     }
   };
-  
+
   const handleUpdateProject = () => {
     if (editingProject && projectName.trim()) {
       dispatch(updateProject({
@@ -105,7 +106,7 @@ const ProjectDashboard: React.FC = () => {
         });
     }
   };
-  
+
   const handleDeleteProject = (projectId: string) => {
     if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
       dispatch(deleteProject(projectId))
@@ -123,18 +124,25 @@ const ProjectDashboard: React.FC = () => {
     dispatch(setCurrentProject(project));
     navigate(`/projects/${project.id}`);
   };
-  
-  // Loading state with improved spinner
-  if (isLoading && projects.length === 0) {
+
+  const handleRetry = () => {
+    console.log('Retrying project fetch');
+    dispatch(fetchProjects());
+  };
+
+  // Show loading while app is initializing (before API calls can be made)
+  if (!isAppReady) {
     return (
       <div className="min-h-screen bg-gray-50">
         <DashboardHeader />
         <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center h-64">
-            {/* Modern loading spinner with pulse effect */}
-            <div className="relative">
-              <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin"></div>
-              <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-l-2 border-r-2 border-blue-300 animate-pulse"></div>
+            <div className="text-center">
+              <div className="relative mb-4">
+                <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin mx-auto"></div>
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 h-16 w-16 rounded-full border-l-2 border-r-2 border-blue-300 animate-pulse"></div>
+              </div>
+              <p className="text-gray-600">Initializing application...</p>
             </div>
           </div>
         </div>
@@ -142,7 +150,27 @@ const ProjectDashboard: React.FC = () => {
     );
   }
   
-  // Error state with improved styling
+  // Loading state - only show if we don't have any projects and we're loading
+  if (isLoading && projects.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader />
+        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="relative mb-4">
+                <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin mx-auto"></div>
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 h-16 w-16 rounded-full border-l-2 border-r-2 border-blue-300 animate-pulse"></div>
+              </div>
+              <p className="text-gray-600">Loading your projects...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  //  Error state with retry functionality
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -157,21 +185,22 @@ const ProjectDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Projects</h2>
             <p className="text-gray-600 mb-6">{error}</p>
             <button 
-              onClick={() => dispatch(fetchProjects())}
+              onClick={handleRetry}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow"
+              disabled={isLoading}
             >
-              Try Again
+              {isLoading ? 'Retrying...' : 'Try Again'}
             </button>
           </div>
         </div>
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-sky-50">
       <DashboardHeader />
-      
+
       {/* Main dashboard container with improved spacing */}
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Dashboard header with redesigned button */}
@@ -179,7 +208,7 @@ const ProjectDashboard: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
           </div>
-          
+
           {!isCreating && !isEditing && (
             <button
               onClick={handleOpenCreateForm}
@@ -192,7 +221,7 @@ const ProjectDashboard: React.FC = () => {
             </button>
           )}
         </div>
-        
+
         {/* Project Form with modern styling */}
         {(isCreating || isEditing) && (
           <div className="mb-8 p-6 border rounded-xl bg-white shadow-sm">
@@ -237,11 +266,10 @@ const ProjectDashboard: React.FC = () => {
                 <button
                   onClick={isCreating ? handleCreateProject : handleUpdateProject}
                   disabled={!projectName.trim()}
-                  className={`px-5 py-2.5 rounded-lg text-white shadow-sm ${
-                    projectName.trim() 
-                      ? 'bg-blue-600 hover:bg-blue-700 hover:shadow' 
+                  className={`px-5 py-2.5 rounded-lg text-white shadow-sm ${projectName.trim()
+                      ? 'bg-blue-600 hover:bg-blue-700 hover:shadow'
                       : 'bg-blue-300 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   {isCreating ? 'Create Project' : 'Update Project'}
                 </button>
@@ -249,7 +277,7 @@ const ProjectDashboard: React.FC = () => {
             </div>
           </div>
         )}
-        
+
         {/* Empty state with improved styling */}
         {projects.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
@@ -273,7 +301,7 @@ const ProjectDashboard: React.FC = () => {
           // Project grid with modern card design - Fixed the height inconsistency issue
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <div 
+              <div
                 key={project.id}
                 className="rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col"
               >
