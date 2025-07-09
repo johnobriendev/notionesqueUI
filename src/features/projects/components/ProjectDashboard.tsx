@@ -200,10 +200,7 @@ const ProjectDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-sky-50">
       <DashboardHeader />
-
-      {/* Main dashboard container with improved spacing */}
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Dashboard header with redesigned button */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
@@ -278,7 +275,6 @@ const ProjectDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Empty state with improved styling */}
         {projects.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-6">

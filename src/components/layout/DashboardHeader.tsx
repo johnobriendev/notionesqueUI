@@ -1,13 +1,20 @@
 // src/components/dashboard/DashboardHeader.tsx
 import React from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useAppDispatch } from '../../app/hooks';
+import { clearProjects } from '../../features/projects/store/projectsSlice';
+import { clearPersistedState } from '../../app/store';
+
 
 const DashboardHeader: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth0();
+  const dispatch = useAppDispatch();
   
-  const handleLogout = () => {
-    logout({ logoutParams: { returnTo: window.location.origin } });
-  };
+const handleLogout = () => {
+  dispatch(clearProjects()); // Clear projects from state
+  clearPersistedState();     // Clear localStorage
+  logout({ logoutParams: { returnTo: window.location.origin } });
+};
   
   return (
     <header className="bg-white shadow">
