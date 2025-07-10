@@ -2,6 +2,8 @@
 
 A powerful task management application built with React, Redux, TypeScript, and Tailwind CSS. This application provides a comprehensive set of features for managing tasks with advanced capabilities similar to a simplified Notion database.
 
+[Live Site :](https://esque.click/) 
+
 ## Features
 
 ### Multiple View Modes
@@ -119,18 +121,66 @@ yarn dev
 ```
 src/
 ├── app/                    # Redux store setup and app hooks
+│   ├── hooks.ts            # Custom Redux hooks
+│   └── store.ts            # Redux store configuration
+├── auth/                   # Authentication related components
+│   └── AuthProvider.tsx    # Authentication context provider
 ├── components/             # UI components
-│   ├── common/             # Reusable components
-│   ├── layout/             # Layout components (Header)
-│   ├── modals/             # Modal components (TaskModal)
-│   ├── task/               # Task-related components (TaskDetailView)
-│   └── views/              # Main views (ListView, KanbanView)
-├── features/               # Redux Toolkit feature slices
-│   ├── tasks/              # Tasks slice (CRUD operations)
-│   └── ui/                 # UI state slice (view mode, filters, etc.)
+│   ├── layout/             # Layout components
+│   │   ├── AuthLayout.tsx  # Authentication layout wrapper
+│   │   ├── DashboardHeader.tsx # Dashboard header component
+│   │   └── Header.tsx      # Main header component
+│   ├── modals/             # Modal components
+│   │   └── DeleteConfirmModal.tsx # Delete confirmation modal
+│   └── ui/                 # Common UI components
+│       └── LoadingSpinner.tsx # Loading spinner component
+├── features/               # Feature-based organization
+│   ├── commands/           # Command pattern implementation
+│   │   ├── store/          # Command state management
+│   │   │   └── commandSlice.ts
+│   │   ├── types/          # Command type definitions
+│   │   │   └── commandTypes.ts
+│   │   └── taskCommands.ts # Task-specific commands
+│   ├── projects/           # Project management feature
+│   │   ├── components/     # Project-specific components
+│   │   │   ├── ProjectDashboard.tsx
+│   │   │   └── ProjectView.tsx
+│   │   ├── hooks/          # Project-specific hooks
+│   │   ├── services/       # Project business logic
+│   │   │   └── projectService.ts
+│   │   └── store/          # Project state management
+│   │       ├── projectSelectors.ts
+│   │       └── projectsSlice.ts
+│   ├── tasks/              # Task management feature
+│   │   ├── components/     # Task-specific components
+│   │   │   ├── BulkEditModal.tsx
+│   │   │   ├── TaskDetailVIew.tsx
+│   │   │   └── TaskModal.tsx
+│   │   ├── hooks/          # Task-specific hooks
+│   │   ├── services/       # Task business logic
+│   │   │   └── taskService.ts
+│   │   └── store/          # Task state management
+│   │       ├── taskSelectors.ts
+│   │       └── tasksSlice.ts
+│   └── ui/                 # UI state management
+│       ├── components/     # UI-specific components
+│       │   └── HistoryControls.tsx
+│       └── store/          # UI state slice
+│           └── uiSlice.ts
+├── lib/                    # Utility libraries
+│   ├── api.ts              # API configuration and utilities
+│   └── utils.ts            # Common utility functions
 ├── types/                  # TypeScript type definitions
+│   └── index.ts            # Global type definitions
+├── views/                  # Main application views
+│   ├── KanbanView.tsx      # Kanban board view
+│   ├── ListView.tsx        # List/table view
+│   └── WelcomePage.tsx     # Welcome/landing page
 ├── App.tsx                 # Main App component
-└── main.tsx                # Entry point
+├── index.css               # Global styles
+├── main.tsx                # Entry point
+├── setupTests.ts           # Test configuration
+└── vite-env.d.ts           # Vite environment types
 ```
 
 ## Customization
