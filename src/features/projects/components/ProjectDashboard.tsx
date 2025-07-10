@@ -1,4 +1,4 @@
-// src/components/dashboard/ProjectDashboard.tsx
+// src/features/projects/components/ProjectDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../app/hooks';
 import {

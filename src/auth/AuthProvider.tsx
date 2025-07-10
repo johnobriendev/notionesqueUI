@@ -3,7 +3,7 @@
 import React, { useEffect, createContext, useContext, useState } from 'react';
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 import { setupAuthInterceptor } from '../lib/api';
-import { debugToken } from '../lib/utils';
+//import { debugToken } from '../lib/utils';
 
 // ADDITION: Create context for app ready state
 interface AuthContextType {
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// ENHANCED: AuthSetup now tracks when app is ready
+// AuthSetuptracks when app is ready
 const AuthSetup: React.FC<AuthProviderProps> = ({ children }) => {
   const { getAccessTokenSilently, isAuthenticated, user, isLoading } = useAuth0();
   const [isAppReady, setIsAppReady] = useState(false);
@@ -57,8 +57,7 @@ const AuthSetup: React.FC<AuthProviderProps> = ({ children }) => {
     const setupAuth = async () => {
       if (isAuthenticated && !isLoading) {
         try {
-          // KEEP YOUR EXISTING DEBUG LOGGING
-          console.log('User is authenticated, setting up API interceptors');
+      
           
           const getToken = async () => {
             try {
@@ -71,16 +70,16 @@ const AuthSetup: React.FC<AuthProviderProps> = ({ children }) => {
 
           const getUserInfo = () => user;
 
-          // KEEP YOUR EXISTING DEBUG
-          debugToken(getToken);
+          
+          //debugToken(getToken);
 
           setupAuthInterceptor(getToken, getUserInfo);
           
           // ADDITION: Small delay to ensure interceptor is fully set up
-          // This replaces the 500ms delay in ProjectDashboard
+          
           setTimeout(() => {
             setIsAppReady(true);
-          }, 50); // Much shorter than your 500ms
+          }, 50); 
           
         } catch (error) {
           console.error('Error setting up auth:', error);

@@ -1,55 +1,55 @@
-// JWT debugging utilities (from authDebug.ts)
-export const decodeJwt = (token: string) => {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        })
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error('Error decoding JWT:', error);
-    return null;
-  }
-};
+// // JWT debugging utilities (from authDebug.ts)
+// export const decodeJwt = (token: string) => {
+//   try {
+//     const base64Url = token.split('.')[1];
+//     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+//     const jsonPayload = decodeURIComponent(
+//       atob(base64)
+//         .split('')
+//         .map(function(c) {
+//           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+//         })
+//         .join('')
+//     );
+//     return JSON.parse(jsonPayload);
+//   } catch (error) {
+//     console.error('Error decoding JWT:', error);
+//     return null;
+//   }
+// };
 
-export const debugToken = async (getToken: () => Promise<string | undefined>) => {
-  try {
-    console.log('Attempting to get token...');
-    const token = await getToken();
+// export const debugToken = async (getToken: () => Promise<string | undefined>) => {
+//   try {
+//     console.log('Attempting to get token...');
+//     const token = await getToken();
     
-    if (!token) {
-      console.error('No token received');
-      return;
-    }
+//     if (!token) {
+//       console.error('No token received');
+//       return;
+//     }
     
-    console.log('Token received (first 10 chars):', token.substring(0, 10) + '...');
+//     console.log('Token received (first 10 chars):', token.substring(0, 10) + '...');
     
-    const payload = decodeJwt(token);
-    console.log('Token payload:', payload);
+//     const payload = decodeJwt(token);
+//     console.log('Token payload:', payload);
     
-    if (payload) {
-      console.log('Token audience:', payload.aud);
-      console.log('Token subject (user id):', payload.sub);
-      console.log('Token expiration:', new Date(payload.exp * 1000).toISOString());
+//     if (payload) {
+//       console.log('Token audience:', payload.aud);
+//       console.log('Token subject (user id):', payload.sub);
+//       console.log('Token expiration:', new Date(payload.exp * 1000).toISOString());
       
-      if (payload.email) {
-        console.log('Token has email claim:', payload.email);
-      } else {
-        console.warn('Token does not have an email claim!');
-      }
-    }
+//       if (payload.email) {
+//         console.log('Token has email claim:', payload.email);
+//       } else {
+//         console.warn('Token does not have an email claim!');
+//       }
+//     }
     
-    return payload;
-  } catch (error) {
-    console.error('Error debugging token:', error);
-  }
-};
+//     return payload;
+//   } catch (error) {
+//     console.error('Error debugging token:', error);
+//   }
+// };
 
 // Welcome tasks for new users (from welcomeTasks.ts)
 import { TaskPriority, TaskStatus } from '../types';
