@@ -1,4 +1,4 @@
-# Notionesque
+# Esque
 
 A powerful task management application built with React, Redux, TypeScript, and Tailwind CSS. This application provides a comprehensive set of features for managing tasks with advanced capabilities similar to a simplified Notion database.
 
