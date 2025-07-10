@@ -36,7 +36,7 @@ const WelcomePage: React.FC = () => {
           <p className="mt-6 text-xl text-gray-600 max-w-xl">
             A powerful task management tool with Kanban and list views, custom fields, and project organization.
           </p>
-          
+
           <div className="mt-10 flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => loginWithRedirect()}
@@ -44,13 +44,16 @@ const WelcomePage: React.FC = () => {
             >
               Get Started — It's Free
             </button>
-            <button className="px-8 py-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow transition-all">
+            {/* <button
+              onClick={}
+              className="px-8 py-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow transition-all"
+            >
               Watch Demo
-            </button>
+            </button> */}
           </div>
-          
+
         </div>
-        
+
         {/* Right Content - Floating UI */}
         <div className="lg:w-1/2 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl transform rotate-3 scale-105 opacity-10"></div>
@@ -66,12 +69,12 @@ const WelcomePage: React.FC = () => {
                 <div className="w-4 h-4 bg-gray-100 rounded-full"></div>
               </div>
             </div>
-            
+
             <div className="mb-4 flex items-center justify-between">
               <div className="w-32 h-6 bg-blue-100 rounded"></div>
               <div className="w-6 h-6 bg-gray-100 rounded-full"></div>
             </div>
-            
+
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="col-span-1 bg-gray-50 p-4 rounded-lg">
                 <div className="w-full h-3 bg-gray-200 rounded mb-2"></div>
@@ -89,7 +92,7 @@ const WelcomePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="h-10 bg-gray-50 rounded-lg flex items-center justify-center">
               <div className="w-28 h-4 bg-gray-200 rounded mx-auto"></div>
             </div>
@@ -105,7 +108,7 @@ const WelcomePage: React.FC = () => {
             Powerful features to help you manage tasks, organize projects, and collaborate with your team.
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
@@ -164,7 +167,7 @@ const WelcomePage: React.FC = () => {
           </button>
         </div>
       </div>
-      
+
       {/* Footer */}
       <footer className="bg-white py-12">
         <div className="container mx-auto px-6">
