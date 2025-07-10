@@ -15,8 +15,8 @@ const WelcomePage: React.FC = () => {
       {/* Navigation */}
       <nav className="pt-6 px-8 flex justify-between items-center">
         <div className="flex items-center">
-          <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl">TW</div>
-          <span className="ml-2 text-xl font-semibold text-gray-900">ThoughtWeb</span>
+          <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl">E</div>
+          <span className="ml-2 text-2xl font-semibold text-gray-900">Esque</span>
         </div>
         <button
           onClick={() => loginWithRedirect()}
@@ -105,7 +105,7 @@ const WelcomePage: React.FC = () => {
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900">Everything you need to stay organized</h2>
           <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-            Powerful features to help you manage tasks, organize projects, and collaborate with your team.
+            Powerful features to help you manage tasks, organize projects, and optimize your work flow.
           </p>
         </div>
 
@@ -157,7 +157,7 @@ const WelcomePage: React.FC = () => {
             Ready to organize your workflow?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of users who are already boosting their productivity with ThoughtWeb.
+            Join thousands of users who are already boosting their productivity with Esque.
           </p>
           <button
             onClick={() => loginWithRedirect()}
@@ -173,11 +173,11 @@ const WelcomePage: React.FC = () => {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-6 md:mb-0">
-              <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">N</div>
-              <span className="ml-2 text-lg font-semibold text-gray-900">ThoughtWeb</span>
+              <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">E</div>
+              <span className="ml-2 text-lg font-semibold text-gray-900">Esque</span>
             </div>
             <div className="text-sm text-gray-500">
-              © {new Date().getFullYear()} ThoughtWeb. All rights reserved.
+              © {new Date().getFullYear()} Esque. All rights reserved.
             </div>
           </div>
         </div>
