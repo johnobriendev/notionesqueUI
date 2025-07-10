@@ -31,7 +31,7 @@ const WelcomePage: React.FC = () => {
         {/* Left Content */}
         <div className="lg:w-1/2 flex flex-col items-start">
           <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-            Create, organize, and <span className="text-blue-600">collaborate</span>
+            Create, organize, and <span className="text-blue-600">accomplish</span>
           </h1>
           <p className="mt-6 text-xl text-gray-600 max-w-xl">
             A powerful task management tool with Kanban and list views, custom fields, and project organization.
