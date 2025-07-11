@@ -11,9 +11,9 @@ const WelcomePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 overflow-x-hidden">
       {/* Navigation */}
-      <nav className="pt-6 px-8 flex justify-between items-center">
+      <nav className="pt-6 px-4 sm:px-8 flex justify-between items-center">
         <div className="flex items-center">
           <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl">E</div>
           <span className="ml-2 text-2xl font-semibold text-gray-900">Esque</span>
@@ -27,37 +27,31 @@ const WelcomePage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-6 pt-20 pb-24 flex flex-col lg:flex-row items-center gap-12">
+      <div className="container mx-auto px-4 sm:px-6 pt-20 pb-24 flex flex-col lg:flex-row items-center gap-12 max-w-7xl">
         {/* Left Content */}
         <div className="lg:w-1/2 flex flex-col items-start">
-          <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
             Create, organize, and <span className="text-blue-600">accomplish</span>
           </h1>
-          <p className="mt-6 text-xl text-gray-600 max-w-xl">
+          <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-xl">
             A powerful task management tool with Kanban and list views, custom fields, and project organization.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row gap-4">
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <button
               onClick={() => loginWithRedirect()}
               className="px-8 py-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
             >
               Get Started — It's Free
             </button>
-            {/* <button
-              onClick={}
-              className="px-8 py-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow transition-all"
-            >
-              Watch Demo
-            </button> */}
           </div>
-
         </div>
 
         {/* Right Content - Floating UI */}
-        <div className="lg:w-1/2 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl transform rotate-3 scale-105 opacity-10"></div>
-          <div className="relative bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+        <div className="lg:w-1/2 relative w-full max-w-lg lg:max-w-none">
+          {/* Fixed the problematic rotated background */}
+          <div className="absolute inset-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl transform rotate-1 opacity-10"></div>
+          <div className="relative bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-100 mx-4 lg:mx-0">
             <div className="flex items-center justify-between mb-6">
               <div className="flex space-x-1">
                 <div className="w-3 h-3 rounded-full bg-red-400"></div>
@@ -101,10 +95,10 @@ const WelcomePage: React.FC = () => {
       </div>
 
       {/* Features Section */}
-      <div className="container mx-auto px-6 py-16">
+      <div className="container mx-auto px-4 sm:px-6 py-16 max-w-7xl">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900">Everything you need to stay organized</h2>
-          <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
             Powerful features to help you manage tasks, organize projects, and optimize your work flow.
           </p>
         </div>
@@ -152,11 +146,11 @@ const WelcomePage: React.FC = () => {
 
       {/* CTA Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 py-16">
-        <div className="container mx-auto px-6 text-center">
+        <div className="container mx-auto px-4 sm:px-6 text-center max-w-7xl">
           <h2 className="text-3xl font-bold text-white mb-4">
             Ready to organize your workflow?
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Join thousands of users who are already boosting their productivity with Esque.
           </p>
           <button
@@ -170,7 +164,7 @@ const WelcomePage: React.FC = () => {
 
       {/* Footer */}
       <footer className="bg-white py-12">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-6 md:mb-0">
               <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">E</div>
@@ -187,6 +181,5 @@ const WelcomePage: React.FC = () => {
 };
 
 export default WelcomePage;
-
 
 
