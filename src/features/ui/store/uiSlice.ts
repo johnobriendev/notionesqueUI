@@ -1,14 +1,14 @@
 //src/features/ui/store/uiSlice.ts
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { 
-  ViewMode, 
-  SortField, 
-  SortDirection, 
+import {
+  ViewMode,
+  SortField,
+  SortDirection,
   SortConfig,
   FilterConfig,
-  TaskStatus, 
-  TaskPriority 
+  TaskStatus,
+  TaskPriority
 } from '../../../types';
 
 // Define the state structure for the UI slice
@@ -26,23 +26,14 @@ interface UiState {
   isBulkEditOpen: boolean;
   bulkEditType: 'status' | 'priority' | null;
   selectedTaskIds: string[];
-  
+  currentProjectId: string | null;
+
 }
 
-// Get saved view mode from localStorage or default to 'list'
-const getSavedViewMode = (): ViewMode => {
-  try {
-    const savedViewMode = localStorage.getItem('viewMode');
-    return (savedViewMode === 'list' || savedViewMode === 'kanban') ? savedViewMode : 'list';
-  } catch (error) {
-    console.error('Error reading from localStorage:', error);
-    return 'list';
-  }
-};
 
 // Initial state when the application loads
 const initialState: UiState = {
-  viewMode: getSavedViewMode(),
+  viewMode: 'list',
   sortConfig: {
     field: 'createdAt',
     direction: 'desc',
@@ -61,7 +52,8 @@ const initialState: UiState = {
   deletingTaskIds: [],
   isBulkEditOpen: false,
   bulkEditType: null,
-  selectedTaskIds: []
+  selectedTaskIds: [],
+  currentProjectId: null
 };
 
 // Create the slice with reducers
@@ -73,14 +65,8 @@ export const uiSlice = createSlice({
     setViewMode: (state, action: PayloadAction<ViewMode>) => {
       state.viewMode = action.payload;
 
-      try {
-        localStorage.setItem('viewMode', action.payload);
-      } catch (error) {
-        console.error('Error saving to localStorage:', error);
-      }
-
     },
-    
+
     // Update the sort configuration
     setSortConfig: (state, action: PayloadAction<Partial<SortConfig>>) => {
       // If same field is clicked, toggle direction
@@ -94,28 +80,32 @@ export const uiSlice = createSlice({
         };
       }
     },
-    
+
+    setCurrentProjectId: (state, action: PayloadAction<string | null>) => {
+      state.currentProjectId = action.payload;
+    },
+
     // Update status filter
     setFilterStatus: (state, action: PayloadAction<TaskStatus | 'all'>) => {
       state.filterConfig.status = action.payload;
     },
-    
+
     // Update priority filter
     setFilterPriority: (state, action: PayloadAction<TaskPriority | 'all'>) => {
       state.filterConfig.priority = action.payload;
     },
-    
+
     // Update search term
     setSearchTerm: (state, action: PayloadAction<string>) => {
       state.filterConfig.searchTerm = action.payload;
     },
-    
+
     // Open task creation/edit modal
     openTaskModal: (state, action: PayloadAction<string | null>) => {
       state.isTaskModalOpen = true;
       state.editingTaskId = action.payload; // null for new task, task ID for editing
     },
-    
+
     // Close task modal
     closeTaskModal: (state) => {
       state.isTaskModalOpen = false;
@@ -130,7 +120,7 @@ export const uiSlice = createSlice({
       state.isTaskModalOpen = false;
       state.editingTaskId = null;
     },
-    
+
     // Close task detail view
     closeTaskDetail: (state) => {
       state.isTaskDetailOpen = false;
@@ -139,7 +129,7 @@ export const uiSlice = createSlice({
 
     openDeleteConfirm: (state, action: PayloadAction<string | string[]>) => {
       state.isDeleteConfirmOpen = true;
-      
+
       if (Array.isArray(action.payload)) {
         state.deletingTaskId = null;
         state.deletingTaskIds = action.payload;
@@ -148,7 +138,7 @@ export const uiSlice = createSlice({
         state.deletingTaskIds = [];
       }
     },
-    
+
     // Close delete confirmation modal
     closeDeleteConfirm: (state) => {
       state.isDeleteConfirmOpen = false;
@@ -165,7 +155,7 @@ export const uiSlice = createSlice({
       state.bulkEditType = action.payload.type;
       state.selectedTaskIds = action.payload.taskIds;
     },
-    
+
     // Close bulk edit modal
     closeBulkEdit: (state) => {
       state.isBulkEditOpen = false;
@@ -177,11 +167,12 @@ export const uiSlice = createSlice({
 });
 
 // Export the actions
-export const { 
-  setViewMode, 
-  setSortConfig, 
-  setFilterStatus, 
-  setFilterPriority, 
+export const {
+  setViewMode,
+  setCurrentProjectId,
+  setSortConfig,
+  setFilterStatus,
+  setFilterPriority,
   setSearchTerm,
   openTaskModal,
   closeTaskModal,
@@ -198,6 +189,7 @@ export default uiSlice.reducer;
 
 // Selectors
 export const selectViewMode = (state: { ui: UiState }) => state.ui.viewMode;
+export const selectCurrentProjectId = (state: { ui: UiState }) => state.ui.currentProjectId;
 export const selectSortConfig = (state: { ui: UiState }) => state.ui.sortConfig;
 export const selectFilterConfig = (state: { ui: UiState }) => state.ui.filterConfig;
 export const selectIsTaskModalOpen = (state: { ui: UiState }) => state.ui.isTaskModalOpen;

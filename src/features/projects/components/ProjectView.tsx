@@ -2,14 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../app/hooks';
-import { fetchProject, selectCurrentProject, setCurrentProject } from '../store/projectsSlice';
+import { fetchProject, selectCurrentProject, setCurrentProject, selectAllProjects } from '../store/projectsSlice';
 import { fetchTasks } from '../../tasks/store/tasksSlice';
-import { closeTaskDetail } from '../../ui/store/uiSlice';
+import { closeTaskDetail, setCurrentProjectId } from '../../ui/store/uiSlice';
 import { clearHistory } from '../../commands/store/commandSlice'; // Import command system
 import Header from '../../../components/layout/Header';
 import ListView from '../../../views/ListView';
 import KanbanView from '../../../views/KanbanView';
 import TaskDetailView from '../../tasks/components/TaskDetailVIew';
+import { useAppAuth } from '../../../auth/AuthProvider';
 
 const ProjectView: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -17,55 +18,91 @@ const ProjectView: React.FC = () => {
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAppReady } = useAppAuth();
 
   const currentProject = useAppSelector(selectCurrentProject);
+  const allProjects = useAppSelector(selectAllProjects);
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const isTaskDetailOpen = useAppSelector(state => state.ui.isTaskDetailOpen);
   const viewingTaskId = useAppSelector(state => state.ui.viewingTaskId);
   const tasks = useAppSelector(state => state.tasks.items);
-  
+
   // Find the task being viewed, if any
-  const taskBeingViewed = viewingTaskId 
-    ? tasks.find(task => task.id === viewingTaskId) 
+  const taskBeingViewed = viewingTaskId
+    ? tasks.find(task => task.id === viewingTaskId)
     : null;
-  
-  // Load the project and its tasks when the component mounts or projectId changes
+
   useEffect(() => {
     let isMounted = true;
+
     const loadProject = async () => {
-      if (!projectId) return;
-      
+      if (!projectId) {
+        navigate('/');
+        return;
+      }
+
+      //  Wait for authentication to be ready
+
+      if (!isAppReady) {
+        return; // Stay in loading state until auth is ready
+      }
+
+      // Avoid unnecessary reloads
+
+      if (currentProject && currentProject.id === projectId) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
-      
+
       try {
-        // Make up to 3 retries if we get auth errors
-        let retries = 0;
-        let project = null;
-        
-        while (retries < 3 && !project) {
-          try {
-            project = await dispatch(fetchProject(projectId)).unwrap();
-          } catch (err: any) {
-            // If it's an auth error, wait and retry
-            if (err?.response?.status === 401 && retries < 2) {
-              console.log(`Auth error, retrying (${retries + 1}/3)...`);
-              await new Promise(r => setTimeout(r, 1000)); // Wait 1 second
-              retries++;
-            } else {
-              throw err; // Re-throw if not auth error or max retries reached
+        //  Check if we already have this project in our store
+
+        let project = allProjects.find(p => p.id === projectId);
+
+        //  Only fetch from API if we don't have the project
+        if (!project) {
+          console.log('Fetching project from API:', projectId);
+
+          // Retry logic for auth errors (this was in your original code)
+          let retries = 0;
+          while (retries < 3 && !project) {
+            try {
+              project = await dispatch(fetchProject(projectId)).unwrap();
+            } catch (err: any) {
+              if (err?.response?.status === 401 && retries < 2) {
+                console.log(`Auth error, retrying (${retries + 1}/3)...`);
+                await new Promise(r => setTimeout(r, 1000));
+                retries++;
+              } else {
+                throw err;
+              }
             }
           }
+        } else {
+
+          console.log('Using project from store:', project.name);
         }
-        
-        if (!project) throw new Error('Failed to load project');
-        
+
+        if (!project) {
+          throw new Error('Project not found');
+        }
+
         if (isMounted) {
-          // CLEAR UNDO HISTORY WHEN SWITCHING PROJECTS
-          
-          dispatch(clearHistory()); 
-          
+          // Only clear undo history if we're switching projects
+          if (currentProject?.id !== projectId) {
+            dispatch(clearHistory());
+          }
+
+          // Set the current project in the projects state
           dispatch(setCurrentProject(project));
+
+
+          dispatch(setCurrentProjectId(projectId));
+
+          // Always fetch fresh tasks (tasks change more frequently than projects)
           await dispatch(fetchTasks(projectId)).unwrap();
           setLoading(false);
         }
@@ -74,19 +111,33 @@ const ProjectView: React.FC = () => {
         if (isMounted) {
           setError('Failed to load project');
           setLoading(false);
-          // Navigate back to dashboard after a delay
           setTimeout(() => navigate('/'), 2000);
         }
       }
     };
-    
+
     loadProject();
-    
+
     return () => {
       isMounted = false;
     };
-  }, [dispatch, projectId, navigate]);
-  
+
+
+  }, [dispatch, projectId, navigate, currentProject, allProjects, isAppReady]);
+
+  if (!isAppReady || loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {!isAppReady ? 'Initializing application...' : 'Loading project...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // If no project is loaded yet, show a loading indicator
   if (!currentProject) {
     return (
@@ -95,24 +146,24 @@ const ProjectView: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header 
-        showBackButton={true} 
+      <Header
+        showBackButton={true}
         projectName={currentProject.name}
       />
-      
+
       <main>
         <div className="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8">
           {viewMode === 'list' ? <ListView /> : <KanbanView />}
         </div>
       </main>
-      
+
       {isTaskDetailOpen && taskBeingViewed && (
-        <TaskDetailView 
-          task={taskBeingViewed} 
-          onClose={() => dispatch(closeTaskDetail())} 
+        <TaskDetailView
+          task={taskBeingViewed}
+          onClose={() => dispatch(closeTaskDetail())}
         />
       )}
     </div>

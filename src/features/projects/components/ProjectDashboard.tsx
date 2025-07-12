@@ -11,6 +11,7 @@ import {
   updateProject,
   deleteProject,
 } from '../store/projectsSlice';
+import { setCurrentProjectId } from '../../ui/store/uiSlice';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { Project } from '../../../types';
@@ -37,7 +38,7 @@ const ProjectDashboard: React.FC = () => {
   const [projectDescription, setProjectDescription] = useState('');
 
   // Fetch projects after auth is ready
-   useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated && isAppReady) {
       console.log('App is ready, fetching projects');
       dispatch(fetchProjects());
@@ -113,6 +114,8 @@ const ProjectDashboard: React.FC = () => {
         .unwrap()
         .then(() => {
           // Project deleted successfully
+          // Clear the current project ID from UI state if it was the deleted project
+          dispatch(setCurrentProjectId(null));
         })
         .catch((error) => {
           console.error('Failed to delete project:', error);
@@ -122,6 +125,7 @@ const ProjectDashboard: React.FC = () => {
 
   const handleSelectProject = (project: Project) => {
     dispatch(setCurrentProject(project));
+    dispatch(setCurrentProjectId(project.id));
     navigate(`/projects/${project.id}`);
   };
 
@@ -149,7 +153,7 @@ const ProjectDashboard: React.FC = () => {
       </div>
     );
   }
-  
+
   // Loading state - only show if we don't have any projects and we're loading
   if (isLoading && projects.length === 0) {
     return (
@@ -169,7 +173,7 @@ const ProjectDashboard: React.FC = () => {
       </div>
     );
   }
-  
+
   //  Error state with retry functionality
   if (error) {
     return (
@@ -184,7 +188,7 @@ const ProjectDashboard: React.FC = () => {
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Projects</h2>
             <p className="text-gray-600 mb-6">{error}</p>
-            <button 
+            <button
               onClick={handleRetry}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow"
               disabled={isLoading}
@@ -264,8 +268,8 @@ const ProjectDashboard: React.FC = () => {
                   onClick={isCreating ? handleCreateProject : handleUpdateProject}
                   disabled={!projectName.trim()}
                   className={`px-5 py-2.5 rounded-lg text-white shadow-sm ${projectName.trim()
-                      ? 'bg-blue-600 hover:bg-blue-700 hover:shadow'
-                      : 'bg-blue-300 cursor-not-allowed'
+                    ? 'bg-blue-600 hover:bg-blue-700 hover:shadow'
+                    : 'bg-blue-300 cursor-not-allowed'
                     }`}
                 >
                   {isCreating ? 'Create Project' : 'Update Project'}
