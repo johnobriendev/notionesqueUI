@@ -47,12 +47,7 @@ const ProjectView: React.FC = () => {
         return; // Stay in loading state until auth is ready
       }
 
-      // Avoid unnecessary reloads
-
-      if (currentProject && currentProject.id === projectId) {
-        setLoading(false);
-        return;
-      }
+    
 
       setLoading(true);
       setError(null);
