@@ -6,6 +6,7 @@ import tasksReducer from '../features/tasks/store/tasksSlice';
 import uiReducer from '../features/ui/store/uiSlice';
 import projectsReducer from '../features/projects/store/projectsSlice';
 import commandsReducer from '../features/commands/store/commandSlice';
+import collaborationReducer from '../features/collaboration/store/collaborationSlice';
 
 
 
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
   ui: persistReducer(uiPersistConfig, uiReducer),
   projects: projectsReducer,
   commands: commandsReducer,
+  collaboration: collaborationReducer,
 });
 
 
