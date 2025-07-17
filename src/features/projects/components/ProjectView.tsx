@@ -11,6 +11,7 @@ import ListView from '../../../views/ListView';
 import KanbanView from '../../../views/KanbanView';
 import TaskDetailView from '../../tasks/components/TaskDetailVIew';
 import { useAppAuth } from '../../../auth/AuthProvider';
+import TeamModal from '../../collaboration/components/TeamModal';
 
 const ProjectView: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -161,6 +162,8 @@ const ProjectView: React.FC = () => {
           onClose={() => dispatch(closeTaskDetail())}
         />
       )}
+
+      <TeamModal />
     </div>
   );
 };

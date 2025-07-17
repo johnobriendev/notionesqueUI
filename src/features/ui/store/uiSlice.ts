@@ -8,27 +8,11 @@ import {
   SortConfig,
   FilterConfig,
   TaskStatus,
-  TaskPriority
+  TaskPriority,
+  UiState
 } from '../../../types';
 
-// Define the state structure for the UI slice
-interface UiState {
-  viewMode: ViewMode;
-  sortConfig: SortConfig;
-  filterConfig: FilterConfig;
-  isTaskModalOpen: boolean;
-  editingTaskId: string | null;
-  isTaskDetailOpen: boolean;
-  viewingTaskId: string | null;
-  isDeleteConfirmOpen: boolean;
-  deletingTaskId: string | null;
-  deletingTaskIds: string[],
-  isBulkEditOpen: boolean;
-  bulkEditType: 'status' | 'priority' | null;
-  selectedTaskIds: string[];
-  currentProjectId: string | null;
 
-}
 
 
 // Initial state when the application loads
@@ -53,7 +37,12 @@ const initialState: UiState = {
   isBulkEditOpen: false,
   bulkEditType: null,
   selectedTaskIds: [],
-  currentProjectId: null
+  currentProjectId: null,
+  isTeamModalOpen: false,
+  isInviteModalOpen: false,
+  isInvitationsPanelOpen: false,
+  activeConflicts: [],
+  conflictBannerVisible: false,
 };
 
 // Create the slice with reducers
@@ -163,6 +152,13 @@ export const uiSlice = createSlice({
       // Don't clear selectedTaskIds to maintain selection after edit
     },
 
+     openTeamModal: (state) => {
+      state.isTeamModalOpen = true;
+    },
+    closeTeamModal: (state) => {
+      state.isTeamModalOpen = false;
+    },
+
   }
 });
 
@@ -181,7 +177,9 @@ export const {
   openDeleteConfirm,
   closeDeleteConfirm,
   openBulkEdit,
-  closeBulkEdit
+  closeBulkEdit,
+  openTeamModal,
+  closeTeamModal,
 } = uiSlice.actions;
 
 // Export the reducer
@@ -201,3 +199,4 @@ export const selectDeletingTaskId = (state: { ui: UiState }) => state.ui.deletin
 export const selectIsBulkEditOpen = (state: { ui: UiState }) => state.ui.isBulkEditOpen;
 export const selectBulkEditType = (state: { ui: UiState }) => state.ui.bulkEditType;
 export const selectSelectedTaskIds = (state: { ui: UiState }) => state.ui.selectedTaskIds;
+export const selectIsTeamModalOpen = (state: { ui: UiState }) => state.ui.isTeamModalOpen;

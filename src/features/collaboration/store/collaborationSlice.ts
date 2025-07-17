@@ -1,4 +1,4 @@
-//src/features/collaboration/store/collaborationSlice.ts - MINIMAL VERSION
+//src/features/collaboration/store/collaborationSlice.ts 
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { ProjectMember, CollaborationState } from '../../../types';
