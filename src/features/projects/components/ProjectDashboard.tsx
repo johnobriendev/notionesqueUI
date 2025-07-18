@@ -19,6 +19,7 @@ import DashboardHeader from '../../../components/layout/DashboardHeader';
 import { useAppAuth } from '../../../auth/AuthProvider';
 
 
+
 // Dashboard component with modern design patterns
 const ProjectDashboard: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -36,15 +37,18 @@ const ProjectDashboard: React.FC = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
+  
 
   // Fetch projects after auth is ready
   useEffect(() => {
     if (isAuthenticated && isAppReady) {
       console.log('App is ready, fetching projects');
       dispatch(fetchProjects());
+      
     }
   }, [dispatch, isAuthenticated, isAppReady]);
 
+  
   // Form handling functions
   const handleOpenCreateForm = () => {
     setIsCreating(true);

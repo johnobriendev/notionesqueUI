@@ -152,11 +152,17 @@ export const uiSlice = createSlice({
       // Don't clear selectedTaskIds to maintain selection after edit
     },
 
-     openTeamModal: (state) => {
+    openTeamModal: (state) => {
       state.isTeamModalOpen = true;
     },
     closeTeamModal: (state) => {
       state.isTeamModalOpen = false;
+    },
+    openInvitationsPanel: (state) => {
+      state.isInvitationsPanelOpen = true;
+    },
+    closeInvitationsPanel: (state) => {
+      state.isInvitationsPanelOpen = false;
     },
 
   }
@@ -180,6 +186,8 @@ export const {
   closeBulkEdit,
   openTeamModal,
   closeTeamModal,
+   openInvitationsPanel,   
+  closeInvitationsPanel,
 } = uiSlice.actions;
 
 // Export the reducer
@@ -200,3 +208,4 @@ export const selectIsBulkEditOpen = (state: { ui: UiState }) => state.ui.isBulkE
 export const selectBulkEditType = (state: { ui: UiState }) => state.ui.bulkEditType;
 export const selectSelectedTaskIds = (state: { ui: UiState }) => state.ui.selectedTaskIds;
 export const selectIsTeamModalOpen = (state: { ui: UiState }) => state.ui.isTeamModalOpen;
+export const selectIsInvitationsPanelOpen = (state: { ui: UiState }) => state.ui.isInvitationsPanelOpen;
