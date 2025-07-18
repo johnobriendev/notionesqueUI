@@ -24,7 +24,6 @@ const initialState: CollaborationState = {
   declineError: null,
 };
 
-// Just ONE async thunk for now - fetch team members
 export const fetchProjectMembers = createAsyncThunk(
   'collaboration/fetchProjectMembers',
   async (projectId: string, { rejectWithValue }) => {
@@ -33,6 +32,25 @@ export const fetchProjectMembers = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch team members');
+    }
+  }
+);
+
+
+export const inviteUser = createAsyncThunk(
+  'collaboration/inviteUser',
+  async (
+    data: { projectId: string; email: string; role: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      await api.post(`/team/projects/${data.projectId}/invite`, {
+        email: data.email,
+        role: data.role
+      });
+      return data; // Return the invite data
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to send invitation');
     }
   }
 );
@@ -62,6 +80,18 @@ const collaborationSlice = createSlice({
       .addCase(fetchProjectMembers.rejected, (state, action) => {
         state.isLoadingMembers = false;
         state.membersError = action.payload as string;
+      })
+      .addCase(inviteUser.pending, (state) => {
+        state.isSendingInvitation = true;
+        state.inviteError = null;
+      })
+      .addCase(inviteUser.fulfilled, (state) => {
+        state.isSendingInvitation = false;
+        // Invitation sent successfully
+      })
+      .addCase(inviteUser.rejected, (state, action) => {
+        state.isSendingInvitation = false;
+        state.inviteError = action.payload as string;
       });
   }
 });
@@ -69,8 +99,12 @@ const collaborationSlice = createSlice({
 export const { clearProjectMembers } = collaborationSlice.actions;
 export default collaborationSlice.reducer;
 
-// Just two selectors for now
-export const selectProjectMembers = (state: { collaboration: CollaborationState }) => 
+
+export const selectProjectMembers = (state: { collaboration: CollaborationState }) =>
   state.collaboration.projectMembers;
-export const selectIsLoadingMembers = (state: { collaboration: CollaborationState }) => 
+export const selectIsLoadingMembers = (state: { collaboration: CollaborationState }) =>
   state.collaboration.isLoadingMembers;
+export const selectIsSendingInvitation = (state: { collaboration: CollaborationState }) => 
+  state.collaboration.isSendingInvitation;
+export const selectInviteError = (state: { collaboration: CollaborationState }) => 
+  state.collaboration.inviteError;
