@@ -8,6 +8,8 @@ import { selectCurrentProject } from '../features/projects/store/projectsSlice';
 import { TaskPriority, TaskStatus, Task } from '../types';
 import { executeCommand } from '../features/commands/store/commandSlice';
 import { createTaskCommand, updateTaskPriorityCommand, reorderTasksCommand } from '../features/commands/taskCommands';
+import { WriteGuard } from '../components/common/PermissionGuard';
+import { getProjectPermissions } from '../lib/permissions';
 
 const KanbanView: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -281,18 +283,20 @@ const KanbanView: React.FC = () => {
                                       </span>
 
                                       <div className="flex space-x-2">
-                                        <button
-                                          onClick={() => handleEditTask(task.id)}
-                                          className="text-indigo-600 hover:text-indigo-900 text-sm"
-                                        >
-                                          Edit
-                                        </button>
-                                        <button
-                                          onClick={() => handleDeleteTask(task.id)}
-                                          className="text-red-600 hover:text-red-900 text-sm"
-                                        >
-                                          Delete
-                                        </button>
+                                        <WriteGuard>
+                                          <button
+                                            onClick={() => handleEditTask(task.id)}
+                                            className="text-indigo-600 hover:text-indigo-900 text-sm"
+                                          >
+                                            Edit
+                                          </button>
+                                          <button
+                                            onClick={() => handleDeleteTask(task.id)}
+                                            className="text-red-600 hover:text-red-900 text-sm"
+                                          >
+                                            Delete
+                                          </button>
+                                        </WriteGuard>
                                       </div>
                                     </div>
 
@@ -345,12 +349,14 @@ const KanbanView: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => handleShowInput(priority as TaskPriority)}
-                          className="mt-2 w-full p-2 text-blue-600 hover:bg-blue-50 rounded text-sm flex items-center justify-center"
-                        >
-                          <span className="text-lg mr-1">+</span> Add task
-                        </button>
+                        <WriteGuard>
+                          <button
+                            onClick={() => handleShowInput(priority as TaskPriority)}
+                            className="mt-2 w-full p-2 text-blue-600 hover:bg-blue-50 rounded text-sm flex items-center justify-center"
+                          >
+                            <span className="text-lg mr-1">+</span> Add task
+                          </button>
+                        </WriteGuard>
                       )}
                     </div>
                   )}
