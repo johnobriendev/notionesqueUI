@@ -8,6 +8,7 @@ import { Task, TaskStatus, TaskPriority } from '../../../types';
 import { useNavigate } from 'react-router-dom';
 import { executeCommand } from '../../commands/store/commandSlice';
 import { createTaskCommand, updateTaskCommand } from '../../commands/taskCommands';
+import { getProjectPermissions } from '../../../lib/permissions';
 
 const TaskModal: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -16,6 +17,7 @@ const TaskModal: React.FC = () => {
   const editingTaskId = useAppSelector(state => state.ui.editingTaskId);
   const tasks = useAppSelector(state => state.tasks.items as Task[]);
   const currentProject = useAppSelector(selectCurrentProject);
+  const permissions = getProjectPermissions(currentProject);
 
 
   // Determine if we're editing an existing task
@@ -35,6 +37,17 @@ const TaskModal: React.FC = () => {
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldValue, setNewFieldValue] = useState('');
+
+  // Check permissions when modal opens
+  useEffect(() => {
+    if (isOpen && !permissions.canWrite) {
+      setError('You don\'t have permission to create or edit tasks in this project.');
+      // Auto-close modal after showing error
+      setTimeout(() => {
+        dispatch(closeTaskModal());
+      }, 3000);
+    }
+  }, [isOpen, permissions.canWrite, dispatch]);
 
   // Reset form when modal opens/closes or editingTaskId changes
   useEffect(() => {
@@ -316,8 +329,8 @@ const TaskModal: React.FC = () => {
                     onClick={handleAddCustomField}
                     disabled={!newFieldName.trim() || !newFieldValue.trim()}
                     className={`mt-3 w-full px-4 py-2 rounded-md transition-colors ${!newFieldName.trim() || !newFieldValue.trim()
-                        ? 'bg-blue-300 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      ? 'bg-blue-300 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
                       }`}
                   >
                     Add Field
@@ -340,8 +353,8 @@ const TaskModal: React.FC = () => {
               type="submit"
               disabled={isSubmitting || !title.trim()}
               className={`px-4 py-2 rounded-md transition-colors ${isSubmitting || !title.trim()
-                  ? 'bg-blue-300 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                ? 'bg-blue-300 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
             >
               {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Create'}

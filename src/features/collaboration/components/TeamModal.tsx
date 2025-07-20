@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { 
+import {
   fetchProjectMembers,
   selectProjectMembers,
   selectIsLoadingMembers,
@@ -10,11 +10,13 @@ import {
   selectIsSendingInvitation,
   selectInviteError,
 } from '../store/collaborationSlice';
-import { 
-  closeTeamModal, 
-  selectIsTeamModalOpen 
+import {
+  closeTeamModal,
+  selectIsTeamModalOpen
 } from '../../ui/store/uiSlice';
 import { selectCurrentProject } from '../../projects/store/projectsSlice';
+import { WriteGuard } from '../../../components/common/PermissionGuard';
+
 
 const TeamModal: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -90,12 +92,25 @@ const TeamModal: React.FC = () => {
           </div>
           <div className="flex items-center space-x-2">
             {!showInviteForm && (
-              <button
-                onClick={() => setShowInviteForm(true)}
-                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+              <WriteGuard
+                fallback={
+                  <button
+                  onClick={() => setShowInviteForm(true)}
+                  className="px-3 py-1 bg-gray-600 text-white rounded text-sm "
+                  disabled
+                >
+                  Invite disabled for read only
+                </button>
+                }
+                showFallback={true}
               >
-                Invite
-              </button>
+                <button
+                  onClick={() => setShowInviteForm(true)}
+                  className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                >
+                  Invite
+                </button>
+              </WriteGuard >
             )}
             <button
               onClick={handleClose}
@@ -121,7 +136,7 @@ const TeamModal: React.FC = () => {
           {showInviteForm && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h3 className="text-sm font-medium text-gray-900 mb-3">Invite New Member</h3>
-              
+
               {inviteError && (
                 <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
                   {inviteError}
@@ -203,11 +218,10 @@ const TeamModal: React.FC = () => {
                     </p>
                     <p className="text-sm text-gray-600">{member.email}</p>
                   </div>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    member.role === 'owner' ? 'bg-red-100 text-red-800' :
-                    member.role === 'editor' ? 'bg-blue-100 text-blue-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${member.role === 'owner' ? 'bg-red-100 text-red-800' :
+                      member.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                    }`}>
                     {member.role}
                   </span>
                 </div>

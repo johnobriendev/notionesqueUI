@@ -3,6 +3,8 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { openDeleteConfirm, openTaskModal } from '../../ui/store/uiSlice';
 import { selectCurrentProject } from '../../../features/projects/store/projectsSlice';
 import { Task, TaskStatus, TaskPriority } from '../../../types';
+import { WriteGuard } from '../../../components/common/PermissionGuard';
+import { getProjectPermissions } from '../../../lib/permissions';
 
 interface TaskDetailViewProps {
   task: Task;
@@ -12,24 +14,26 @@ interface TaskDetailViewProps {
 const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
   const dispatch = useAppDispatch();
   const currentProject = useAppSelector(selectCurrentProject);
-  
+
+  const permissions = getProjectPermissions(currentProject);
+
   // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
-  
+
   // Handle edit task
   const handleEdit = () => {
     dispatch(openTaskModal(task.id));
     onClose(); // Close the detail view
   };
-  
+
   // Handle delete task
   const handleDelete = () => {
     dispatch(openDeleteConfirm(task.id));
     onClose(); // Close the detail view when opening delete confirmation
   };
-  
+
   // Get status badge class
   const getStatusBadgeClass = (status: TaskStatus) => {
     switch (status) {
@@ -41,7 +45,7 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
   // Get priority badge class
   const getPriorityBadgeClass = (priority: TaskPriority) => {
     switch (priority) {
@@ -60,7 +64,7 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
 
   // Verify the task belongs to the current project
   const isTaskInCurrentProject = currentProject && task.projectId === currentProject.id;
-  
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -74,7 +78,19 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-800">Task Details</h2>
+          <div className="flex items-center space-x-3">
+            <h2 className="text-xl font-semibold text-gray-800">Task Details</h2>
+            {/* 🆕 NEW: Show user's permission level */}
+            {currentProject && (
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
+                permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {permissions.userRole}
+              </span>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -86,11 +102,20 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
           </button>
         </div>
         
-        {/* Display a warning if the task doesn't belong to the current project */}
+        
         {!isTaskInCurrentProject && (
           <div className="bg-yellow-50 px-6 py-2 border-b border-yellow-100">
             <p className="text-yellow-700 text-sm">
               This task belongs to a different project than the one you're currently viewing.
+            </p>
+          </div>
+        )}
+
+        
+        {!permissions.canWrite && (
+          <div className="bg-blue-50 px-6 py-2 border-b border-blue-100">
+            <p className="text-blue-700 text-sm">
+              You have read-only access to this task.
             </p>
           </div>
         )}
@@ -115,7 +140,14 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
               <div>
                 <span className="font-medium">Updated:</span> {formatDate(task.updatedAt)}
               </div>
-              
+              {task.updatedBy && (
+                <div className="sm:col-span-2">
+                  <span className="font-medium">Last edited by:</span> {task.updatedBy}
+                </div>
+              )}
+              {/* <div className="sm:col-span-2">
+                <span className="font-medium">Project ID:</span> {task.projectId}
+              </div> */}
             </div>
           </div>
           
@@ -145,21 +177,30 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
           )}
         </div>
         
-        {/* Footer with actions */}
-        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-3">
-          <button
-            onClick={handleDelete}
-            className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors"
-          >
-            Delete
-          </button>
-          <button
-            onClick={handleEdit}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Edit
-          </button>
-        </div>
+       
+        <WriteGuard
+          fallback={
+            <div className="px-6 py-4 border-t bg-gray-50 flex justify-end">
+              <span className="text-sm text-gray-500 italic">Read-only access</span>
+            </div>
+          }
+          showFallback={true}
+        >
+          <div className="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-3">
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors"
+            >
+              Delete
+            </button>
+            <button
+              onClick={handleEdit}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Edit
+            </button>
+          </div>
+        </WriteGuard>
       </div>
     </div>
   );

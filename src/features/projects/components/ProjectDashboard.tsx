@@ -353,7 +353,7 @@ const ProjectDashboard: React.FC = () => {
           // Project grid with modern card design - Fixed the height inconsistency issue
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => {
-              // 🆕 NEW: Get permissions for each project
+              // Get permissions for each project
               const permissions = getProjectPermissions(project);
               
               return (
@@ -365,7 +365,7 @@ const ProjectDashboard: React.FC = () => {
                   <div className="p-6 flex-grow">
                     <div className="flex items-start justify-between mb-2">
                       <h2 className="text-xl font-semibold text-gray-800 line-clamp-1 flex-1">{project.name}</h2>
-                      {/* 🆕 NEW: Show user role badge */}
+                    
                       <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
                         permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
                         permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
@@ -395,7 +395,7 @@ const ProjectDashboard: React.FC = () => {
                   {/* Card footer - Now consistent height regardless of card content */}
                   <div className="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
                     <div className="space-x-3">
-                      {/* 🔄 MODIFIED: Only show edit button if user has write permissions */}
+                      
                       {permissions.canWrite && (
                         <button
                           onClick={() => handleOpenEditForm(project)}
@@ -409,7 +409,7 @@ const ProjectDashboard: React.FC = () => {
                           </span>
                         </button>
                       )}
-                      {/* 🔄 MODIFIED: Only show delete button if user is owner */}
+                      
                       {permissions.canDeleteProject && (
                         <button
                           onClick={() => handleDeleteProject(project)}
@@ -423,7 +423,7 @@ const ProjectDashboard: React.FC = () => {
                           </span>
                         </button>
                       )}
-                      {/* 🆕 NEW: Show permissions info for viewers */}
+                      
                       {!permissions.canWrite && !permissions.canDeleteProject && (
                         <span className="text-xs text-gray-500 italic">Read-only access</span>
                       )}
