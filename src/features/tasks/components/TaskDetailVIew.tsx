@@ -115,9 +115,7 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
               <div>
                 <span className="font-medium">Updated:</span> {formatDate(task.updatedAt)}
               </div>
-              <div>
-                <span className="font-medium">Project ID:</span> {task.projectId}
-              </div>
+              
             </div>
           </div>
           
