@@ -5,6 +5,8 @@ import { openTaskModal, setSortConfig, openTaskDetail, openDeleteConfirm, openBu
 import { selectCurrentProject } from '../features/projects/store/projectsSlice';
 import { selectSortedFilteredTasks } from '../features/tasks/store/tasksSlice';
 import { Task, SortField, SortDirection, TaskStatus, TaskPriority } from '../types';
+import { WriteGuard } from '../components/common/PermissionGuard';
+import { getProjectPermissions } from '../lib/permissions';
 
 const ListView: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -13,6 +15,7 @@ const ListView: React.FC = () => {
   const sortConfig = useAppSelector(state => state.ui.sortConfig);
   const isDeleteConfirmOpen = useAppSelector(selectIsDeleteConfirmOpen);
   const currentProject = useAppSelector(selectCurrentProject);
+  const permissions = getProjectPermissions(currentProject);
 
   // State for selected tasks (for bulk actions)
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
@@ -20,6 +23,9 @@ const ListView: React.FC = () => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 10;
+
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+
 
   // Reset selections when tasks change (due to deletion, etc.)
   useEffect(() => {
@@ -43,6 +49,16 @@ const ListView: React.FC = () => {
       // setSelectedTaskIds(new Set());
     }
   }, [isDeleteConfirmOpen]);
+
+  // Clear permission errors after 5 seconds
+  useEffect(() => {
+    if (permissionError) {
+      const timer = setTimeout(() => {
+        setPermissionError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [permissionError]);
 
 
   // Filter and sort tasks based on current configuration and current project
@@ -80,24 +96,57 @@ const ListView: React.FC = () => {
     return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
 
-  // Handle edit task
+  // Handle edit task with permission check
   const handleEditTask = (task: Task) => {
+    // 🆕 NEW: Check permissions before allowing edit
+    if (!permissions.canWrite) {
+      setPermissionError('You don\'t have permission to edit tasks in this project.');
+      return;
+    }
     dispatch(openTaskModal(task.id));
   };
 
-  // Handle delete task
+  // Handle delete task with permission check
   const handleDeleteTask = (id: string) => {
+    // 🆕 NEW: Check permissions before allowing delete
+    if (!permissions.canWrite) {
+      setPermissionError('You don\'t have permission to delete tasks in this project.');
+      return;
+    }
     dispatch(openDeleteConfirm(id));
   };
 
-  // Handle bulk delete
+  // Handle bulk delete with permission check
   const handleBulkDelete = () => {
+    // 🆕 NEW: Check permissions before allowing bulk delete
+    if (!permissions.canWrite) {
+      setPermissionError('You don\'t have permission to delete tasks in this project.');
+      return;
+    }
     if (selectedTaskIds.size === 0) return;
     dispatch(openDeleteConfirm(Array.from(selectedTaskIds)));
   };
 
-  // Toggle task selection
+  // Handle bulk edit with permission check
+  const handleBulkEdit = (type: 'status' | 'priority') => {
+    if (!permissions.canWrite) {
+      setPermissionError('You don\'t have permission to edit tasks in this project.');
+      return;
+    }
+    if (selectedTaskIds.size === 0) return;
+    dispatch(openBulkEdit({
+      type,
+      taskIds: Array.from(selectedTaskIds)
+    }));
+  };
+
+  // Toggle task selection (only for users with write permissions)
   const toggleTaskSelection = (id: string) => {
+    // 🆕 NEW: Check permissions before allowing selection
+    if (!permissions.canWrite) {
+      setPermissionError('You don\'t have permission to select tasks for bulk operations.');
+      return;
+    }
     const newSelection = new Set(selectedTaskIds);
     if (newSelection.has(id)) {
       newSelection.delete(id);
@@ -107,8 +156,13 @@ const ListView: React.FC = () => {
     setSelectedTaskIds(newSelection);
   };
 
-  // Toggle all selection
+  // Toggle all selection (only for users with write permissions)
   const toggleSelectAll = () => {
+    // 🆕 NEW: Check permissions before allowing select all
+    if (!permissions.canWrite) {
+      setPermissionError('You don\'t have permission to select tasks for bulk operations.');
+      return;
+    }
     if (selectedTaskIds.size === paginatedTasks.length) {
       // Deselect all
       setSelectedTaskIds(new Set());
@@ -170,54 +224,99 @@ const ListView: React.FC = () => {
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
-      {/* Bulk actions bar */}
-      {selectedTaskIds.size > 0 && (
-        <div className="bg-blue-50 px-4 py-2 flex items-center justify-between border-b">
-          <span className="text-sm text-blue-700 font-medium">
-            {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'task' : 'tasks'} selected
-          </span>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => dispatch(openBulkEdit({
-                type: 'status',
-                taskIds: Array.from(selectedTaskIds)
-              }))}
-              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-            >
-              Change Status
-            </button>
-            <button
-              onClick={() => dispatch(openBulkEdit({
-                type: 'priority',
-                taskIds: Array.from(selectedTaskIds)
-              }))}
-              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-            >
-              Change Priority
-            </button>
-            <button
-              onClick={handleBulkDelete}
-              className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-            >
-              Delete Selected
-            </button>
+      {/* 🆕 NEW: Permission Error Banner */}
+      {permissionError && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{permissionError}</p>
+            </div>
+            <div className="ml-auto pl-3">
+              <button
+                onClick={() => setPermissionError(null)}
+                className="text-red-400 hover:text-red-600"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* 🆕 NEW: User Role Indicator */}
+      <div className="bg-gray-50 px-4 py-2 border-b">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">
+            Your role: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
+              permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {permissions.userRole}
+            </span>
+          </span>
+          {!permissions.canWrite && (
+            <span className="text-xs text-gray-500 italic">
+              Read-only access
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 🔄 MODIFIED: Bulk actions bar - Only show for users with write permissions */}
+      <WriteGuard>
+        {selectedTaskIds.size > 0 && (
+          <div className="bg-blue-50 px-4 py-2 flex items-center justify-between border-b">
+            <span className="text-sm text-blue-700 font-medium">
+              {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'task' : 'tasks'} selected
+            </span>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleBulkEdit('status')} 
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+              >
+                Change Status
+              </button>
+              <button
+                onClick={() => handleBulkEdit('priority')} 
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+              >
+                Change Priority
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+              >
+                Delete Selected
+              </button>
+            </div>
+          </div>
+        )}
+      </WriteGuard>
 
       {/* Task table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-3 py-3 text-left">
-                <input
-                  type="checkbox"
-                  checked={paginatedTasks.length > 0 && selectedTaskIds.size === paginatedTasks.length}
-                  onChange={toggleSelectAll}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-              </th>
+              {/* 🔄 MODIFIED: Only show checkbox column for users with write permissions */}
+              <WriteGuard>
+                <th className="px-3 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={paginatedTasks.length > 0 && selectedTaskIds.size === paginatedTasks.length}
+                    onChange={toggleSelectAll}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
+              </WriteGuard>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('title')}
@@ -242,22 +341,28 @@ const ListView: React.FC = () => {
               >
                 Updated {getSortIndicator('updatedAt')}
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {/* 🔄 MODIFIED: Only show actions column for users with write permissions */}
+              <WriteGuard>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </WriteGuard>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedTasks.map(task => (
               <tr key={task.id} className="hover:bg-gray-50">
-                <td className="px-3 py-4 whitespace-nowrap">
-                  <input
-                    type="checkbox"
-                    checked={selectedTaskIds.has(task.id)}
-                    onChange={() => toggleTaskSelection(task.id)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </td>
+                {/* 🔄 MODIFIED: Only show checkbox for users with write permissions */}
+                <WriteGuard>
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedTaskIds.has(task.id)}
+                      onChange={() => toggleTaskSelection(task.id)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </td>
+                </WriteGuard>
                 <td className="px-6 py-4">
                   <div
                     className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
@@ -282,6 +387,12 @@ const ListView: React.FC = () => {
                       )}
                     </div>
                   )}
+                  {/* 🆕 NEW: Show last updated by information */}
+                  {task.updatedBy && (
+                    <div className="mt-1 text-xs text-gray-400">
+                      Last edited by: {task.updatedBy}
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(task.status)}`}>
@@ -296,27 +407,31 @@ const ListView: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(task.updatedAt)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleEditTask(task)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteTask(task.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </td>
+                {/* 🔄 MODIFIED: Only show actions for users with write permissions */}
+                <WriteGuard>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEditTask(task)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </WriteGuard>
               </tr>
             ))}
 
             {paginatedTasks.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                  No tasks found. Create a new task to get started.
+                {/* 🔄 MODIFIED: Adjust colspan based on user permissions */}
+                <td colSpan={permissions.canWrite ? 6 : 4} className="px-6 py-10 text-center text-gray-500">
+                  No tasks found. {permissions.canWrite ? 'Create a new task to get started.' : 'No tasks to display.'}
                 </td>
               </tr>
             )}
@@ -324,7 +439,7 @@ const ListView: React.FC = () => {
         </table>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination - No changes needed here */}
       {totalPages > 1 && (
         <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
           <div className="flex-1 flex justify-between sm:hidden">

@@ -13,7 +13,9 @@ import { ViewMode, TaskStatus, TaskPriority } from '../../types';
 import HistoryControls from '../../features/ui/components/HistoryControls';
 import { useAuth0 } from '@auth0/auth0-react';
 import { openTeamModal } from '../../features/ui/store/uiSlice';
-
+import { WriteGuard, InviteGuard } from '../common/PermissionGuard';
+import { selectCurrentProject } from '../../features/projects/store/projectsSlice';
+import { getProjectPermissions } from '../../lib/permissions';
 
 interface HeaderProps {
   showBackButton?: boolean;
@@ -26,6 +28,9 @@ const Header: React.FC<HeaderProps> = (props) => {
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const filterConfig = useAppSelector(state => state.ui.filterConfig);
   const { user, logout, isAuthenticated } = useAuth0();
+
+  const currentProject = useAppSelector(selectCurrentProject);
+  const permissions = getProjectPermissions(currentProject);
 
 
   // Handle opening team modal
@@ -86,7 +91,9 @@ const Header: React.FC<HeaderProps> = (props) => {
             </h1>
 
             {/* Undo/Redo Controls */}
-            <HistoryControls />
+            <WriteGuard>
+              <HistoryControls />
+            </WriteGuard>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -110,18 +117,68 @@ const Header: React.FC<HeaderProps> = (props) => {
             )}
 
 
-            <button
-              onClick={handleCreateTask}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            {/* 🔄 MODIFIED: Create Task button - Only show for users with write permissions */}
+            <WriteGuard
+              fallback={
+                // 🆕 NEW: Show disabled button with tooltip for viewers
+                <div className="relative group">
+                  <button
+                    disabled
+                    className="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed transition-colors"
+                  >
+                    Create Task
+                  </button>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    You don't have permission to create tasks
+                  </div>
+                </div>
+              }
+              showFallback={!!currentProject} // Only show fallback if we're in a project
             >
-              Create Task
-            </button>
-            <button
-              onClick={handleOpenTeam}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-            >
-              Team
-            </button>
+              <button
+                onClick={handleCreateTask}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Create Task
+              </button>
+            </WriteGuard>
+
+            {/* 🔄 MODIFIED: Team button - Show for all users but with different permissions */}
+            {currentProject && (
+              <InviteGuard
+                fallback={
+                  // 🆕 NEW: Show team button for viewers (read-only access to team info)
+                  <button
+                    onClick={handleOpenTeam}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  >
+                    Team
+                  </button>
+                }
+                showFallback={true}
+              >
+                <button
+                  onClick={handleOpenTeam}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  Team
+                </button>
+              </InviteGuard>
+            )}
+
+            {/* 🆕 NEW: Role indicator for current project */}
+            {currentProject && (
+              <div className="hidden sm:flex items-center">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
+                    permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                  }`}>
+                  {permissions.userRole}
+                </span>
+              </div>
+            )}
+
+
 
             <div className="flex space-x-2">
               <button
@@ -182,6 +239,11 @@ const Header: React.FC<HeaderProps> = (props) => {
               <option value="high">High</option>
               <option value="urgent">Urgent</option>
             </select>
+            {currentProject && !permissions.canWrite && (
+              <div className="hidden md:flex items-center text-xs text-gray-500 italic">
+                Read-only access
+              </div>
+            )}
           </div>
         </div>
       </div>
