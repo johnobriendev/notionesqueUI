@@ -13,6 +13,7 @@ import {
   selectIsInvitationsPanelOpen,
 } from '../../features/ui/store/uiSlice';
 import InvitationsPanel from '../../features/collaboration/components/InvitationsPanel';
+import { useAppAuth } from '../../auth/AuthProvider';
 
 
 const DashboardHeader: React.FC = () => {
@@ -20,12 +21,13 @@ const DashboardHeader: React.FC = () => {
   const dispatch = useAppDispatch();
   const pendingInvitations = useAppSelector(selectPendingInvitations);
   const isInvitationsPanelOpen = useAppSelector(selectIsInvitationsPanelOpen);
+   const { isAppReady } = useAppAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && isAppReady) {
       dispatch(fetchPendingInvitations());
     }
-  }, [isAuthenticated, dispatch]);
+  }, [isAuthenticated, isAppReady, dispatch]);
 
 
   const handleLogout = () => {
