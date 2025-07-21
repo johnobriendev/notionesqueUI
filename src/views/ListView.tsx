@@ -270,7 +270,7 @@ const ListView: React.FC = () => {
         </div>
       </div>
 
-      {/* 🔄 MODIFIED: Bulk actions bar - Only show for users with write permissions */}
+      
       <WriteGuard>
         {selectedTaskIds.size > 0 && (
           <div className="bg-blue-50 px-4 py-2 flex items-center justify-between border-b">
@@ -306,7 +306,7 @@ const ListView: React.FC = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {/* 🔄 MODIFIED: Only show checkbox column for users with write permissions */}
+              
               <WriteGuard>
                 <th className="px-3 py-3 text-left">
                   <input
@@ -341,7 +341,7 @@ const ListView: React.FC = () => {
               >
                 Updated {getSortIndicator('updatedAt')}
               </th>
-              {/* 🔄 MODIFIED: Only show actions column for users with write permissions */}
+              
               <WriteGuard>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -352,7 +352,7 @@ const ListView: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedTasks.map(task => (
               <tr key={task.id} className="hover:bg-gray-50">
-                {/* 🔄 MODIFIED: Only show checkbox for users with write permissions */}
+                
                 <WriteGuard>
                   <td className="px-3 py-4 whitespace-nowrap">
                     <input
@@ -387,12 +387,12 @@ const ListView: React.FC = () => {
                       )}
                     </div>
                   )}
-                  {/* 🆕 NEW: Show last updated by information */}
-                  {task.updatedBy && (
+                  
+                  {/* {task.updatedBy && (
                     <div className="mt-1 text-xs text-gray-400">
                       Last edited by: {task.updatedBy}
                     </div>
-                  )}
+                  )} */}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(task.status)}`}>

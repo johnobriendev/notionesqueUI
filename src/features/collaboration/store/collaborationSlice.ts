@@ -1,7 +1,7 @@
 //src/features/collaboration/store/collaborationSlice.ts 
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { ProjectMember, CollaborationState, Invitation } from '../../../types';
+import { ProjectMember, CollaborationState, Invitation, UserRole } from '../../../types';
 import api from '../../../lib/api';
 
 // Super simple initial state - just team members
@@ -67,6 +67,42 @@ export const inviteUser = createAsyncThunk(
   }
 );
 
+// Update member role
+export const updateMemberRole = createAsyncThunk(
+  'collaboration/updateMemberRole',
+  async (
+    data: { projectId: string; userId: string; role: UserRole },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.put(`/team/projects/${data.projectId}/collaborators/${data.userId}/role`, {
+        role: data.role
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update member role');
+    }
+  }
+);
+
+// Remove team member
+export const removeMember = createAsyncThunk(
+  'collaboration/removeMember',
+  async (
+    data: { projectId: string; userId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      await api.delete(`/team/projects/${data.projectId}/collaborators/${data.userId}`);
+      return data.userId; // Return the removed user ID
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to remove team member');
+    }
+  }
+);
+
+
+
 export const acceptInvitation = createAsyncThunk(
   'collaboration/acceptInvitation',
   async (invitationToken: string, { rejectWithValue }) => {
@@ -102,10 +138,14 @@ const collaborationSlice = createSlice({
       state.projectMembers = [];
       state.membersError = null;
     },
-     clearInvitationsError: (state) => {
+    clearInvitationsError: (state) => {
       state.invitationsError = null;
       state.acceptError = null;
       state.declineError = null;
+    },
+     clearTeamManagementErrors: (state) => {
+      state.roleUpdateError = null;
+      state.removeError = null;
     },
   },
   extraReducers: (builder) => {
@@ -147,6 +187,42 @@ const collaborationSlice = createSlice({
         state.isSendingInvitation = false;
         state.inviteError = action.payload as string;
       })
+      .addCase(updateMemberRole.pending, (state) => {
+        state.isUpdatingRole = true;
+        state.roleUpdateError = null;
+      })
+      .addCase(updateMemberRole.fulfilled, (state, action) => {
+        state.isUpdatingRole = false;
+        // Update the member in the local state
+        const memberIndex = state.projectMembers.findIndex(
+          member => member.userId === action.payload.id
+        );
+        if (memberIndex !== -1) {
+          state.projectMembers[memberIndex] = {
+            ...state.projectMembers[memberIndex],
+            role: action.payload.role
+          };
+        }
+      })
+      .addCase(updateMemberRole.rejected, (state, action) => {
+        state.isUpdatingRole = false;
+        state.roleUpdateError = action.payload as string;
+      })
+      .addCase(removeMember.pending, (state) => {
+        state.isRemovingMember = true;
+        state.removeError = null;
+      })
+      .addCase(removeMember.fulfilled, (state, action) => {
+        state.isRemovingMember = false;
+        // Remove the member from local state
+        state.projectMembers = state.projectMembers.filter(
+          member => member.userId !== action.payload
+        );
+      })
+      .addCase(removeMember.rejected, (state, action) => {
+        state.isRemovingMember = false;
+        state.removeError = action.payload as string;
+      })
       .addCase(acceptInvitation.pending, (state) => {
         state.isAcceptingInvitation = true;
         state.acceptError = null;
@@ -162,7 +238,7 @@ const collaborationSlice = createSlice({
         state.isAcceptingInvitation = false;
         state.acceptError = action.payload as string;
       })
-      
+
       // Decline invitation
       .addCase(declineInvitation.pending, (state) => {
         state.isDecliningInvitation = true;
@@ -182,9 +258,8 @@ const collaborationSlice = createSlice({
   }
 });
 
-export const { clearProjectMembers, clearInvitationsError } = collaborationSlice.actions;
+export const { clearProjectMembers, clearInvitationsError, clearTeamManagementErrors } = collaborationSlice.actions;
 export default collaborationSlice.reducer;
-
 
 export const selectProjectMembers = (state: { collaboration: CollaborationState }) =>
   state.collaboration.projectMembers;
@@ -196,12 +271,20 @@ export const selectIsLoadingInvitations = (state: { collaboration: Collaboration
   state.collaboration.isLoadingInvitations;
 export const selectIsSendingInvitation = (state: { collaboration: CollaborationState }) => 
   state.collaboration.isSendingInvitation;
+export const selectIsUpdatingRole = (state: { collaboration: CollaborationState }) => 
+  state.collaboration.isUpdatingRole;
+export const selectIsRemovingMember = (state: { collaboration: CollaborationState }) => 
+  state.collaboration.isRemovingMember;
 export const selectIsAcceptingInvitation = (state: { collaboration: CollaborationState }) => 
   state.collaboration.isAcceptingInvitation;
 export const selectIsDecliningInvitation = (state: { collaboration: CollaborationState }) => 
   state.collaboration.isDecliningInvitation;
 export const selectInviteError = (state: { collaboration: CollaborationState }) => 
   state.collaboration.inviteError;
+export const selectRoleUpdateError = (state: { collaboration: CollaborationState }) => 
+  state.collaboration.roleUpdateError;
+export const selectRemoveError = (state: { collaboration: CollaborationState }) => 
+  state.collaboration.removeError;
 export const selectInvitationsError = (state: { collaboration: CollaborationState }) => 
   state.collaboration.invitationsError;
 export const selectAcceptError = (state: { collaboration: CollaborationState }) => 

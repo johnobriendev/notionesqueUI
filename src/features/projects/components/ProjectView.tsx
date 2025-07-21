@@ -48,7 +48,7 @@ const ProjectView: React.FC = () => {
         return; // Stay in loading state until auth is ready
       }
 
-    
+
 
       setLoading(true);
       setError(null);
@@ -87,10 +87,9 @@ const ProjectView: React.FC = () => {
         }
 
         if (isMounted) {
-          // Only clear undo history if we're switching projects
-          if (currentProject?.id !== projectId) {
-            dispatch(clearHistory());
-          }
+
+          dispatch(clearHistory());
+
 
           // Set the current project in the projects state
           dispatch(setCurrentProject(project));
