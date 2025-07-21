@@ -87,6 +87,7 @@ export const updateTaskAsync = createAsyncThunk(
         position?: number;
         customFields?: Record<string, string | number | boolean>;
       };
+      version?: number;
     },
     { getState, rejectWithValue }
   ) => {
@@ -110,9 +111,19 @@ export const updateTaskAsync = createAsyncThunk(
         }
       }
 
-      const result = await taskService.updateTask(data.projectId, data.taskId, data.updates);
+      const result = await taskService.updateTask(data.projectId, data.taskId, {
+        ...data.updates,
+        ...(data.version && { version: data.version })
+      });
       return result;
     } catch (error: any) {
+      if (error.response?.status === 409 && error.response?.data?.error === 'VERSION_CONFLICT') {
+        return rejectWithValue({
+          type: 'VERSION_CONFLICT',
+          conflict: error.response.data.conflict,
+          message: error.response.data.message
+        });
+      }
       return rejectWithValue(error.response?.data?.message || 'Failed to update task');
     }
   }
@@ -159,6 +170,7 @@ export const updateTaskPriorityAsync = createAsyncThunk(
       taskId: string;
       priority: TaskPriority;
       destinationIndex?: number;
+      version?: number;
     },
     { rejectWithValue }
   ) => {
@@ -167,11 +179,19 @@ export const updateTaskPriorityAsync = createAsyncThunk(
         data.projectId,
         data.taskId,
         data.priority,
-        data.destinationIndex
+        data.destinationIndex,
+        data.version
       );
 
       return result;
     } catch (error: any) {
+      if (error.response?.status === 409 && error.response?.data?.error === 'VERSION_CONFLICT') {
+        return rejectWithValue({
+          type: 'VERSION_CONFLICT',
+          conflict: error.response.data.conflict,
+          message: error.response.data.message
+        });
+      }
       return rejectWithValue(error.response?.data?.message || 'Failed to update task priority');
     }
   }
@@ -237,7 +257,7 @@ export const tasksSlice = createSlice({
     clearTasks: (state) => {
       state.items = [];
     },
-    
+
     // 🎯 NEW: Optimistic update actions for smooth drag & drop UX
     optimisticUpdateTaskPriority: (state, action: PayloadAction<{
       taskId: string;
@@ -246,7 +266,7 @@ export const tasksSlice = createSlice({
     }>) => {
       const { taskId, priority, destinationIndex } = action.payload;
       const taskIndex = state.items.findIndex(t => t.id === taskId);
-      
+
       if (taskIndex !== -1) {
         // Update the task's priority immediately
         state.items[taskIndex] = {
@@ -258,13 +278,13 @@ export const tasksSlice = createSlice({
         };
       }
     },
-    
+
     optimisticReorderTasks: (state, action: PayloadAction<{
       priority: TaskPriority;
       taskIds: string[];
     }>) => {
       const { priority, taskIds } = action.payload;
-      
+
       // Update positions for all tasks in the reordered list
       taskIds.forEach((taskId, index) => {
         const taskIndex = state.items.findIndex(t => t.id === taskId);
@@ -277,7 +297,7 @@ export const tasksSlice = createSlice({
         }
       });
     },
-    
+
     // Revert optimistic updates (in case of failure)
     revertOptimisticUpdate: (state, action: PayloadAction<{
       taskId: string;
@@ -285,17 +305,17 @@ export const tasksSlice = createSlice({
     }>) => {
       const { taskId, originalTask } = action.payload;
       const taskIndex = state.items.findIndex(t => t.id === taskId);
-      
+
       if (taskIndex !== -1) {
         state.items[taskIndex] = originalTask;
       }
     },
-    
+
     revertOptimisticReorder: (state, action: PayloadAction<{
       originalTasks: Task[];
     }>) => {
       const { originalTasks } = action.payload;
-      
+
       // Restore original tasks
       originalTasks.forEach(originalTask => {
         const taskIndex = state.items.findIndex(t => t.id === originalTask.id);
@@ -305,7 +325,7 @@ export const tasksSlice = createSlice({
       });
     }
   },
-  
+
   extraReducers: (builder) => {
     builder
       // Fetch tasks
@@ -450,12 +470,12 @@ export const tasksSlice = createSlice({
 });
 
 // Export actions
-export const { 
-  clearTasks, 
-  optimisticUpdateTaskPriority, 
+export const {
+  clearTasks,
+  optimisticUpdateTaskPriority,
   optimisticReorderTasks,
   revertOptimisticUpdate,
-  revertOptimisticReorder 
+  revertOptimisticReorder
 } = tasksSlice.actions;
 
 // Export the simple reducer (no more undoable wrapper!)

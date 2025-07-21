@@ -92,11 +92,11 @@ export interface AcceptInvitationRequest {
 // Conflict resolution
 export interface TaskConflict {
   taskId: string;
+  expectedVersion: number;
   currentVersion: number;
-  conflictVersion: number;
-  updatedBy: string;
+  lastUpdatedBy: string;
+  lastUpdatedAt: string;
   currentTask: Task;
-  message: string;
 }
 
 export type ViewMode = 'list' | 'kanban';
