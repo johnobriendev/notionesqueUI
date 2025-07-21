@@ -14,6 +14,8 @@ import {
   revertOptimisticReorder
 } from '../tasks/store/tasksSlice'; import { Task, TaskStatus, TaskPriority } from '../../types';
 import { AppDispatch } from '../../app/store';
+import { showConflictResolution } from '../tasks/hooks/useConflictResolution';
+
 
 // Data interfaces for command parameters
 interface CreateTaskData {
@@ -77,7 +79,7 @@ export const createTaskCommand = (data: CreateTaskData): UndoableCommand => {
     description: `Create task: ${data.title}`,
 
     execute: async (dispatch: AppDispatch, getState) => {
-      console.log('🎯 Executing: Create task', data.title);
+      ////console.log('🎯 Executing: Create task', data.title);
 
       // Clean API call - no isUndoOperation flag needed anymore
       const result = await dispatch(createTaskAsync({
@@ -91,7 +93,7 @@ export const createTaskCommand = (data: CreateTaskData): UndoableCommand => {
       })).unwrap();
 
       createdTaskId = result.id;
-      console.log('✅ Task created with ID:', createdTaskId);
+      ////console.log('✅ Task created with ID:', createdTaskId);
     },
 
     undo: async (dispatch: AppDispatch, getState) => {
@@ -99,7 +101,7 @@ export const createTaskCommand = (data: CreateTaskData): UndoableCommand => {
         throw new Error('Cannot undo: No task ID stored');
       }
 
-      console.log('↩️ Undoing: Delete created task', createdTaskId);
+      ////console.log('↩️ Undoing: Delete created task', createdTaskId);
 
       // Clean API call - no isUndoOperation flag needed
       await dispatch(deleteTaskAsync({
@@ -107,7 +109,7 @@ export const createTaskCommand = (data: CreateTaskData): UndoableCommand => {
         taskId: createdTaskId
       })).unwrap();
 
-      console.log('✅ Task creation undone');
+      ////console.log('✅ Task creation undone');
     }
   };
 };
@@ -125,20 +127,56 @@ export const updateTaskCommand = (data: UpdateTaskData): UndoableCommand => {
 
       // Store current task data before updating
       const state = getState();
-      // Note: Updated to use the new state structure (no .present)
       const currentTask = state.tasks.items.find((t: Task) => t.id === data.taskId);
       if (currentTask) {
         previousTaskData = { ...currentTask };
       }
 
-      // Clean API call - no isUndoOperation flag needed
-      await dispatch(updateTaskAsync({
-        projectId: data.projectId,
-        taskId: data.taskId,
-        updates: data.updates
-      })).unwrap();
+      // 🆕 NEW: Attempt update with version information
+      const attemptUpdate = async (retryWithVersion?: number): Promise<void> => {
+        try {
+          await dispatch(updateTaskAsync({
+            projectId: data.projectId,
+            taskId: data.taskId,
+            updates: data.updates,
+            // 🆕 NEW: Pass current version for conflict detection
+            version: retryWithVersion || currentTask?.version
+          })).unwrap();
 
-      console.log('✅ Task updated');
+          console.log('✅ Task updated');
+        } catch (error: any) {
+          // 🆕 NEW: Handle version conflicts
+          if (error.type === 'VERSION_CONFLICT') {
+            console.log('⚠️ Version conflict detected, showing resolution modal');
+            
+            const result = await showConflictResolution(error.conflict, data.updates);
+            
+            if (result.resolution === 'keep_mine') {
+              // Force update with current version (overwrite their changes)
+              await dispatch(updateTaskAsync({
+                projectId: data.projectId,
+                taskId: data.taskId,
+                updates: data.updates,
+                version: error.conflict.currentVersion // Use their current version
+              })).unwrap();
+              
+              console.log('✅ Task updated (kept user changes)');
+            } else if (result.resolution === 'take_theirs') {
+              // Don't update, just refresh our local state with their version
+              console.log('✅ Conflict resolved (took their changes)');
+              // The task is already updated with their version in Redux
+            } else {
+              // User cancelled
+              throw new Error('Update cancelled by user');
+            }
+          } else {
+            // Re-throw other errors
+            throw error;
+          }
+        }
+      };
+
+      await attemptUpdate();
     },
 
     undo: async (dispatch: AppDispatch, getState) => {
@@ -148,7 +186,10 @@ export const updateTaskCommand = (data: UpdateTaskData): UndoableCommand => {
 
       console.log('↩️ Undoing: Restore previous task data', data.taskId);
 
-      // Clean API call - no isUndoOperation flag needed
+      // For undo, we'll force the update (assuming undo should always work)
+      const currentState = getState();
+      const currentTask = currentState.tasks.items.find((t: Task) => t.id === data.taskId);
+      
       await dispatch(updateTaskAsync({
         projectId: data.projectId,
         taskId: data.taskId,
@@ -159,7 +200,8 @@ export const updateTaskCommand = (data: UpdateTaskData): UndoableCommand => {
           priority: previousTaskData.priority,
           position: previousTaskData.position,
           customFields: previousTaskData.customFields
-        }
+        },
+        version: currentTask?.version // Use current version for undo
       })).unwrap();
 
       console.log('✅ Task update undone');
@@ -176,7 +218,7 @@ export const deleteTaskCommand = (data: DeleteTaskData): UndoableCommand => {
     description: `Delete task`,
 
     execute: async (dispatch: AppDispatch, getState) => {
-      console.log('🎯 Executing: Delete task', data.taskId);
+      //console.log('🎯 Executing: Delete task', data.taskId);
 
       // Store task data before deleting
       const state = getState();
@@ -192,7 +234,7 @@ export const deleteTaskCommand = (data: DeleteTaskData): UndoableCommand => {
         taskId: data.taskId
       })).unwrap();
 
-      console.log('✅ Task deleted');
+      //console.log('✅ Task deleted');
     },
 
     undo: async (dispatch: AppDispatch, getState) => {
@@ -200,7 +242,7 @@ export const deleteTaskCommand = (data: DeleteTaskData): UndoableCommand => {
         throw new Error('Cannot undo: No deleted task data stored');
       }
 
-      console.log('↩️ Undoing: Recreate deleted task', deletedTaskData.id);
+      //console.log('↩️ Undoing: Recreate deleted task', deletedTaskData.id);
 
       // Recreate the task with its original ID and all properties
       await dispatch(createTaskAsync({
@@ -214,7 +256,7 @@ export const deleteTaskCommand = (data: DeleteTaskData): UndoableCommand => {
         taskId: deletedTaskData.id // Preserve original ID
       })).unwrap();
 
-      console.log('✅ Task deletion undone');
+      //console.log('✅ Task deletion undone');
     }
   };
 };
@@ -228,7 +270,7 @@ export const bulkDeleteTasksCommand = (data: BulkDeleteTasksData): UndoableComma
     description: `Delete ${data.taskIds.length} tasks`,
 
     execute: async (dispatch: AppDispatch, getState) => {
-      console.log('🎯 Executing: Bulk delete tasks', data.taskIds.length, 'tasks');
+      //console.log('🎯 Executing: Bulk delete tasks', data.taskIds.length, 'tasks');
 
       // Capture all task data before deleting for undo functionality
       const state = getState();
@@ -240,7 +282,7 @@ export const bulkDeleteTasksCommand = (data: BulkDeleteTasksData): UndoableComma
 
       // Store all deleted tasks data
       deletedTasksData = tasksToDelete.map(task => ({ ...task }));
-      console.log('📝 Stored', deletedTasksData.length, 'deleted tasks data');
+      //console.log('📝 Stored', deletedTasksData.length, 'deleted tasks data');
 
       // Execute the bulk deletion
       await dispatch(deleteTasksAsync({
@@ -248,7 +290,7 @@ export const bulkDeleteTasksCommand = (data: BulkDeleteTasksData): UndoableComma
         taskIds: data.taskIds
       })).unwrap();
 
-      console.log('✅ Bulk delete completed');
+      //console.log('✅ Bulk delete completed');
     },
 
     undo: async (dispatch: AppDispatch, getState) => {
@@ -256,7 +298,7 @@ export const bulkDeleteTasksCommand = (data: BulkDeleteTasksData): UndoableComma
         throw new Error('Cannot undo: No deleted tasks data stored');
       }
 
-      console.log('↩️ Undoing: Recreate', deletedTasksData.length, 'deleted tasks');
+      //console.log('↩️ Undoing: Recreate', deletedTasksData.length, 'deleted tasks');
 
       // Recreate all deleted tasks with their original IDs and properties
       for (const taskData of deletedTasksData) {
@@ -272,7 +314,7 @@ export const bulkDeleteTasksCommand = (data: BulkDeleteTasksData): UndoableComma
         })).unwrap();
       }
 
-      console.log('✅ Bulk delete undone - all tasks recreated');
+      //console.log('✅ Bulk delete undone - all tasks recreated');
     }
   };
 };
@@ -304,28 +346,72 @@ export const updateTaskPriorityCommand = (data: UpdateTaskPriorityData): Undoabl
         }));
         hasOptimisticUpdate = true;
 
-        try {
-          // 3. Execute the actual API call
-          await dispatch(updateTaskPriorityAsync({
-            projectId: data.projectId,
-            taskId: data.taskId,
-            priority: data.priority,
-            destinationIndex: data.destinationIndex
-          })).unwrap();
-
-          console.log('✅ Task priority updated');
-          // The API success will update the state with the real data
-
-        } catch (error) {
-          // 4. Revert optimistic update on failure
-          if (hasOptimisticUpdate && previousTaskData) {
-            dispatch(revertOptimisticUpdate({
+        // 🆕 NEW: Attempt update with conflict resolution
+        const attemptUpdate = async (): Promise<void> => {
+          try {
+            await dispatch(updateTaskPriorityAsync({
+              projectId: data.projectId,
               taskId: data.taskId,
-              originalTask: previousTaskData
-            }));
+              priority: data.priority,
+              destinationIndex: data.destinationIndex,
+              version: currentTask.version // Pass current version
+            })).unwrap();
+
+            console.log('✅ Task priority updated');
+          } catch (error: any) {
+            // Handle version conflicts
+            if (error.type === 'VERSION_CONFLICT') {
+              console.log('⚠️ Priority update conflict detected');
+              
+              const result = await showConflictResolution(
+                error.conflict, 
+                { priority: data.priority }
+              );
+              
+              if (result.resolution === 'keep_mine') {
+                // Force update with current version
+                await dispatch(updateTaskPriorityAsync({
+                  projectId: data.projectId,
+                  taskId: data.taskId,
+                  priority: data.priority,
+                  destinationIndex: data.destinationIndex,
+                  version: error.conflict.currentVersion
+                })).unwrap();
+                
+                console.log('✅ Task priority updated (kept user changes)');
+              } else if (result.resolution === 'take_theirs') {
+                // Revert optimistic update and use their changes
+                if (hasOptimisticUpdate && previousTaskData) {
+                  dispatch(revertOptimisticUpdate({
+                    taskId: data.taskId,
+                    originalTask: previousTaskData
+                  }));
+                }
+                console.log('✅ Priority conflict resolved (took their changes)');
+              } else {
+                // User cancelled - revert optimistic update
+                if (hasOptimisticUpdate && previousTaskData) {
+                  dispatch(revertOptimisticUpdate({
+                    taskId: data.taskId,
+                    originalTask: previousTaskData
+                  }));
+                }
+                throw new Error('Priority update cancelled by user');
+              }
+            } else {
+              // Revert optimistic update on other failures
+              if (hasOptimisticUpdate && previousTaskData) {
+                dispatch(revertOptimisticUpdate({
+                  taskId: data.taskId,
+                  originalTask: previousTaskData
+                }));
+              }
+              throw error;
+            }
           }
-          throw error; // Re-throw to let command system handle it
-        }
+        };
+
+        await attemptUpdate();
       }
     },
 
@@ -344,12 +430,16 @@ export const updateTaskPriorityCommand = (data: UpdateTaskPriorityData): Undoabl
       }));
 
       try {
-        // Execute the actual API call
+        const currentState = getState();
+        const currentTask = currentState.tasks.items.find((t: Task) => t.id === data.taskId);
+        
+        // Execute the actual API call with current version
         await dispatch(updateTaskPriorityAsync({
           projectId: data.projectId,
           taskId: data.taskId,
           priority: previousTaskData.priority,
-          destinationIndex: previousTaskData.position
+          destinationIndex: previousTaskData.position,
+          version: currentTask?.version
         })).unwrap();
 
         console.log('✅ Task priority update undone');
@@ -380,7 +470,7 @@ export const reorderTasksCommand = (data: ReorderTasksData): UndoableCommand => 
     description: `Reorder tasks in ${data.priority} priority`,
 
     execute: async (dispatch: AppDispatch, getState) => {
-      console.log('🎯 Executing: Reorder tasks in priority', data.priority);
+      //console.log('🎯 Executing: Reorder tasks in priority', data.priority);
 
       // 1. Capture the current state before making changes
       const state = getState();
@@ -391,8 +481,8 @@ export const reorderTasksCommand = (data: ReorderTasksData): UndoableCommand => 
       previousTasksOrder = currentTasks.map(t => t.id);
       originalTasks = currentTasks.map(t => ({ ...t })); // Deep copy
 
-      console.log('📝 Previous order:', previousTasksOrder);
-      console.log('📝 New order:', data.taskIds);
+      //console.log('📝 Previous order:', previousTasksOrder);
+      //console.log('📝 New order:', data.taskIds);
 
       // 2. Apply optimistic update immediately
       dispatch(optimisticReorderTasks({
@@ -408,7 +498,7 @@ export const reorderTasksCommand = (data: ReorderTasksData): UndoableCommand => 
           taskIds: data.taskIds
         })).unwrap();
 
-        console.log('✅ Tasks reordered');
+        //console.log('✅ Tasks reordered');
 
       } catch (error) {
         // 4. Revert optimistic update on failure
@@ -424,8 +514,8 @@ export const reorderTasksCommand = (data: ReorderTasksData): UndoableCommand => 
         throw new Error('Cannot undo: No previous order stored');
       }
 
-      console.log('↩️ Undoing: Restore task order in priority', data.priority);
-      console.log('📝 Restoring order:', previousTasksOrder);
+      //console.log('↩️ Undoing: Restore task order in priority', data.priority);
+      //console.log('📝 Restoring order:', previousTasksOrder);
 
       // Apply optimistic update immediately
       dispatch(optimisticReorderTasks({
@@ -441,7 +531,7 @@ export const reorderTasksCommand = (data: ReorderTasksData): UndoableCommand => 
           taskIds: previousTasksOrder
         })).unwrap();
 
-        console.log('✅ Task reorder undone');
+        //console.log('✅ Task reorder undone');
 
       } catch (error) {
         // On failure, revert back to current state
@@ -463,7 +553,7 @@ export const bulkUpdateTasksCommand = (data: BulkUpdateTasksData): UndoableComma
     description: `Bulk update ${data.taskIds.length} tasks`,
     
     execute: async (dispatch: AppDispatch, getState) => {
-      console.log('🎯 Executing: Bulk update tasks', data.taskIds.length, 'tasks');
+      //console.log('🎯 Executing: Bulk update tasks', data.taskIds.length, 'tasks');
       
       // Capture the original state of all tasks being updated
       const state = getState();
@@ -482,7 +572,7 @@ export const bulkUpdateTasksCommand = (data: BulkUpdateTasksData): UndoableComma
         }
       }));
       
-      console.log('📝 Stored original data for', previousTasksData.length, 'tasks');
+      //console.log('📝 Stored original data for', previousTasksData.length, 'tasks');
       
       // Execute the bulk update
       await dispatch(bulkUpdateTasksAsync({
@@ -491,7 +581,7 @@ export const bulkUpdateTasksCommand = (data: BulkUpdateTasksData): UndoableComma
         updates: data.updates
       })).unwrap();
       
-      console.log('✅ Bulk update completed');
+      //console.log('✅ Bulk update completed');
     },
     
     undo: async (dispatch: AppDispatch, getState) => {
@@ -499,7 +589,7 @@ export const bulkUpdateTasksCommand = (data: BulkUpdateTasksData): UndoableComma
         throw new Error('Cannot undo: No previous task data stored');
       }
       
-      console.log('↩️ Undoing: Restore original data for', previousTasksData.length, 'tasks');
+      //console.log('↩️ Undoing: Restore original data for', previousTasksData.length, 'tasks');
       
       // Restore each task's original status/priority
       for (const taskData of previousTasksData) {
@@ -510,7 +600,7 @@ export const bulkUpdateTasksCommand = (data: BulkUpdateTasksData): UndoableComma
         })).unwrap();
       }
       
-      console.log('✅ Bulk update undone - all tasks restored');
+      //console.log('✅ Bulk update undone - all tasks restored');
     }
   };
 };
