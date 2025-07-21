@@ -34,6 +34,7 @@ const Header: React.FC<HeaderProps> = (props) => {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
 
   // Handle opening team modal
@@ -86,43 +87,36 @@ const Header: React.FC<HeaderProps> = (props) => {
   return (
     <header className="bg-white shadow relative">
       {/* Reduced padding for minimalist design */}
-      <div className="max-w-8xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
-        {/* Single row layout */}
-        <div className="flex items-center justify-between h-12">
+      <div className="max-w-full mx-auto px-4 py-2 sm:px-6 lg:px-8">
+        {/* Flexible single row layout */}
+        <div className="flex items-center justify-between min-h-12 gap-2">
           
-          {/* Left section - Back button, title, and undo/redo */}
-          <div className="flex items-center space-x-3 min-w-0 flex-1">
+          {/* Left section - Back button and title only */}
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
             {showBackButton && (
               <button
                 onClick={() => window.history.back()}
-                className="text-gray-600 hover:text-gray-900 text-sm whitespace-nowrap"
+                className="text-gray-600 hover:text-gray-900 text-sm whitespace-nowrap flex-shrink-0"
               >
                 ← Back
               </button>
             )}
 
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 truncate">
+            <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-900 truncate min-w-0">
               {projectName || "Notionesque"}
             </h1>
-
-            {/* Hide undo/redo on mobile */}
-            <WriteGuard>
-              <div className="hidden sm:block">
-                <HistoryControls />
-              </div>
-            </WriteGuard>
           </div>
 
           {/* Center section - Search (expandable on mobile) */}
-          <div className="flex items-center mx-4 flex-shrink-0">
-            {/* Desktop search - always visible */}
+          <div className="flex items-center mx-2 lg:mx-4 flex-shrink-0">
+            {/* Desktop search - smaller on laptops */}
             <div className="hidden md:block">
               <input
                 type="text"
                 placeholder="Search tasks..."
                 value={filterConfig.searchTerm}
                 onChange={handleSearchChange}
-                className="w-48 lg:w-64 h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-40 lg:w-48 xl:w-64 h-8 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
@@ -157,10 +151,17 @@ const Header: React.FC<HeaderProps> = (props) => {
           </div>
 
           {/* Right section - Actions and user */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+
+            {/* Undo/Redo controls - moved to right side */}
+            <WriteGuard>
+              <div className="hidden lg:block">
+                <HistoryControls />
+              </div>
+            </WriteGuard>
             
             {/* Desktop actions - visible on larger screens */}
-            <div className="hidden lg:flex items-center space-x-2">
+            <div className="hidden xl:flex items-center space-x-2">
               {/* Compact view mode toggle */}
               <div className="flex bg-gray-100 rounded-md p-1">
                 <button
@@ -212,6 +213,40 @@ const Header: React.FC<HeaderProps> = (props) => {
                   <option value="urgent">Urgent</option>
                 </select>
               </div>
+            </div>
+
+            {/* Laptop/Tablet actions - condensed view */}
+            <div className="hidden lg:flex xl:hidden items-center space-x-2">
+              <div className="flex bg-gray-100 rounded-md p-1">
+                <button
+                  onClick={() => handleViewModeChange('list')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-white text-gray-800 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  List
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('kanban')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    viewMode === 'kanban'
+                      ? 'bg-white text-gray-800 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Board
+                </button>
+              </div>
+
+              {/* Menu button for filters on laptop */}
+              <button
+                onClick={toggleMobileMenu}
+                className="h-8 w-8 flex items-center justify-center text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+              >
+                ⋯
+              </button>
             </div>
 
             {/* Tablet actions - some actions visible */}
@@ -304,42 +339,62 @@ const Header: React.FC<HeaderProps> = (props) => {
               </InviteGuard>
             )}
 
-            {/* Compact user section */}
+            {/* User profile dropdown */}
             {isAuthenticated && user && (
-              <div className="flex items-center space-x-2">
-                {user.picture && (
-                  <img
-                    src={user.picture}
-                    alt="Profile"
-                    className="h-7 w-7 rounded-full border border-gray-200"
-                  />
-                )}
-                <span className="hidden sm:inline text-sm text-gray-700 max-w-24 truncate">
-                  {user.name}
-                </span>
+              <div className="relative">
                 <button
-                  onClick={handleLogout}
-                  className="text-sm text-gray-600 hover:text-gray-900 hidden sm:inline"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center space-x-1 h-8 px-2 rounded-md hover:bg-gray-100 transition-colors"
                 >
-                  Logout
+                  {user.picture && (
+                    <img
+                      src={user.picture}
+                      alt="Profile"
+                      className="h-6 w-6 rounded-full border border-gray-200"
+                    />
+                  )}
+                  <span className="hidden lg:inline text-sm text-gray-700 max-w-20 truncate">
+                    {user.name}
+                  </span>
+                  <span className="text-gray-400 text-xs">▼</span>
                 </button>
-              </div>
-            )}
 
-            {/* Compact role indicator */}
-            {currentProject && (
-              <span className={`hidden xl:inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
-                permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {permissions.userRole}
-              </span>
+                {/* User dropdown menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <div className="py-2">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                        {currentProject && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Role: <span className={`font-medium ${
+                              permissions.userRole === 'owner' ? 'text-red-600' :
+                              permissions.userRole === 'editor' ? 'text-blue-600' :
+                              'text-gray-600'
+                            }`}>
+                              {permissions.userRole}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
 
-        {/* Mobile/Tablet dropdown menu */}
+        {/* Enhanced Mobile/Tablet/User dropdown menu */}
         {isMobileMenuOpen && (
           <div className="absolute top-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
             <div className="px-4 py-3 space-y-3">
@@ -376,7 +431,14 @@ const Header: React.FC<HeaderProps> = (props) => {
                 </div>
               </div>
 
-              {/* Mobile filters */}
+              {/* Mobile/Laptop undo/redo - show when hidden from main header */}
+              <WriteGuard>
+                <div className="lg:hidden pt-2 border-t border-gray-200">
+                  <HistoryControls />
+                </div>
+              </WriteGuard>
+
+              {/* Mobile filters and laptop overflow filters */}
               <div className="space-y-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
@@ -409,20 +471,27 @@ const Header: React.FC<HeaderProps> = (props) => {
                 </div>
               </div>
 
-              {/* Mobile undo/redo */}
-              <WriteGuard>
-                <div className="sm:hidden pt-2 border-t border-gray-200">
-                  <HistoryControls />
-                </div>
-              </WriteGuard>
-
-              {/* Mobile user actions */}
+              {/* User actions and role info */}
               {isAuthenticated && user && (
-                <div className="sm:hidden pt-2 border-t border-gray-200 flex justify-between items-center">
-                  <span className="text-sm text-gray-700">{user.name}</span>
+                <div className="pt-2 border-t border-gray-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-700 font-medium">{user.name}</span>
+                    {currentProject && (
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
+                        permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {permissions.userRole}
+                      </span>
+                    )}
+                  </div>
                   <button
-                    onClick={handleLogout}
-                    className="text-sm text-gray-600 hover:text-gray-900"
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
                   >
                     Logout
                   </button>
@@ -432,7 +501,7 @@ const Header: React.FC<HeaderProps> = (props) => {
               {/* Mobile read-only indicator */}
               {currentProject && !permissions.canWrite && (
                 <div className="text-xs text-gray-500 italic text-center pt-2 border-t border-gray-200">
-                  Read-only access • {permissions.userRole}
+                  Read-only access
                 </div>
               )}
             </div>
