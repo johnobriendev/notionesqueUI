@@ -60,7 +60,7 @@ const ProjectView: React.FC = () => {
 
         //  Only fetch from API if we don't have the project
         if (!project) {
-          console.log('Fetching project from API:', projectId);
+          //console.log('Fetching project from API:', projectId);
 
           // Retry logic for auth errors (this was in your original code)
           let retries = 0;
@@ -69,7 +69,7 @@ const ProjectView: React.FC = () => {
               project = await dispatch(fetchProject(projectId)).unwrap();
             } catch (err: any) {
               if (err?.response?.status === 401 && retries < 2) {
-                console.log(`Auth error, retrying (${retries + 1}/3)...`);
+                //console.log(`Auth error, retrying (${retries + 1}/3)...`);
                 await new Promise(r => setTimeout(r, 1000));
                 retries++;
               } else {
@@ -79,7 +79,7 @@ const ProjectView: React.FC = () => {
           }
         } else {
 
-          console.log('Using project from store:', project.name);
+          //console.log('Using project from store:', project.name);
         }
 
         if (!project) {
@@ -88,12 +88,7 @@ const ProjectView: React.FC = () => {
 
         if (isMounted) {
 
-          console.log('🎯 Setting current project in ProjectView:', {
-            id: project.id,
-            name: project.name,
-            userRole: project.userRole,
-            canWrite: project.canWrite
-          });
+          
 
           dispatch(clearHistory());
 

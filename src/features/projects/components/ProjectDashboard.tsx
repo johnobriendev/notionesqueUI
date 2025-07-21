@@ -43,7 +43,7 @@ const ProjectDashboard: React.FC = () => {
   // Fetch projects after auth is ready
   useEffect(() => {
     if (isAuthenticated && isAppReady) {
-      console.log('App is ready, fetching projects');
+      //console.log('App is ready, fetching projects');
       dispatch(fetchProjects());
 
     }
@@ -99,13 +99,7 @@ const ProjectDashboard: React.FC = () => {
       }))
         .unwrap()
         .then((newProject) => {
-          console.log('🎯 Created project response:', {
-            id: newProject.id,
-            name: newProject.name,
-            userRole: newProject.userRole,
-            canWrite: newProject.canWrite
-          });
-
+        
           handleCloseForm();
           // Navigate to the new project
           handleSelectProject(newProject);
@@ -157,13 +151,7 @@ const ProjectDashboard: React.FC = () => {
   };
 
   const handleSelectProject = (project: Project) => {
-    console.log('🎯 Selecting project:', {
-      id: project.id,
-      name: project.name,
-      userRole: project.userRole,
-      canWrite: project.canWrite
-    });
-
+  
     dispatch(setCurrentProject(project));
     dispatch(setCurrentProjectId(project.id));
     navigate(`/projects/${project.id}`);

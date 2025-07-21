@@ -50,7 +50,7 @@ const DeleteConfirmModal: React.FC = () => {
         
       } else if (deletingTaskId) {
         // 🎯 UPDATED: Use deleteTaskCommand instead of direct thunk
-        console.log('🎯 Creating DELETE command for task:', deletingTaskId);
+        //console.log('🎯 Creating DELETE command for task:', deletingTaskId);
         
         const command = deleteTaskCommand({
           projectId: currentProject.id,
@@ -58,7 +58,7 @@ const DeleteConfirmModal: React.FC = () => {
         });
         
         await dispatch(executeCommand(command)).unwrap();
-        console.log('✅ Delete command executed successfully');
+        //console.log('✅ Delete command executed successfully');
       }
 
       // Close modal on success

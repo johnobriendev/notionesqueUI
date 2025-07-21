@@ -29,10 +29,10 @@ const HistoryControls: React.FC = () => {
   const handleUndo = async () => {
     if (!canUndo || isExecuting) return;
     
-    console.log('🔄 Undoing last command...');
+    //console.log('🔄 Undoing last command...');
     try {
       await dispatch(undoLastCommand()).unwrap();
-      console.log('✅ Undo completed successfully');
+      //console.log('✅ Undo completed successfully');
     } catch (error) {
       console.error('❌ Undo failed:', error);
       // You could show a toast notification here
@@ -43,10 +43,10 @@ const HistoryControls: React.FC = () => {
   const handleRedo = async () => {
     if (!canRedo || isExecuting) return;
     
-    console.log('🔄 Redoing last command...');
+    //console.log('🔄 Redoing last command...');
     try {
       await dispatch(redoLastCommand()).unwrap();
-      console.log('✅ Redo completed successfully');
+      //console.log('✅ Redo completed successfully');
     } catch (error) {
       console.error('❌ Redo failed:', error);
       // You could show a toast notification here

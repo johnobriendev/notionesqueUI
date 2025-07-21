@@ -20,7 +20,7 @@ export const executeCommand = createAsyncThunk<
   'commands/executeCommand',
   async (command: UndoableCommand, { dispatch, getState, rejectWithValue }) => {
     try {
-      console.log(`🎯 Executing command: ${command.description}`);
+      //console.log(`🎯 Executing command: ${command.description}`);
       await command.execute(dispatch, getState);
       return command;
     } catch (error: any) {
@@ -48,7 +48,7 @@ export const undoLastCommand = createAsyncThunk<
     const command = undoStack[undoStack.length - 1];
     
     try {
-      console.log(`↩️ Undoing command: ${command.description}`);
+      //console.log(`↩️ Undoing command: ${command.description}`);
       await command.undo(dispatch, getState);
       return command;
     } catch (error: any) {
@@ -76,7 +76,7 @@ export const redoLastCommand = createAsyncThunk<
     const command = redoStack[redoStack.length - 1];
     
     try {
-      console.log(`↪️ Redoing command: ${command.description}`);
+      //console.log(`↪️ Redoing command: ${command.description}`);
       await command.execute(dispatch, getState);
       return command;
     } catch (error: any) {
@@ -95,7 +95,7 @@ export const commandSlice = createSlice({
     clearHistory: (state) => {
       state.undoStack = [];
       state.redoStack = [];
-      console.log('🧹 Command history cleared');
+      //console.log('🧹 Command history cleared');
     },
     
     // Clear redo stack (used when a new command is executed)
@@ -115,7 +115,7 @@ export const commandSlice = createSlice({
         state.undoStack.push(action.payload);
         // Clear redo stack when new command is executed
         state.redoStack = [];
-        console.log(`✅ Command executed and added to undo stack`);
+        //console.log(`✅ Command executed and added to undo stack`);
       })
       .addCase(executeCommand.rejected, (state, action) => {
         state.isExecuting = false;
@@ -133,7 +133,7 @@ export const commandSlice = createSlice({
         if (command) {
           state.redoStack.push(command);
         }
-        console.log(`✅ Command undone and moved to redo stack`);
+        //console.log(`✅ Command undone and moved to redo stack`);
       })
       .addCase(undoLastCommand.rejected, (state, action) => {
         state.isExecuting = false;
@@ -151,7 +151,7 @@ export const commandSlice = createSlice({
         if (command) {
           state.undoStack.push(command);
         }
-        console.log(`✅ Command redone and moved to undo stack`);
+        //console.log(`✅ Command redone and moved to undo stack`);
       })
       .addCase(redoLastCommand.rejected, (state, action) => {
         state.isExecuting = false;
