@@ -1,6 +1,6 @@
 //src/components/layout/Header.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
   setViewMode,
@@ -36,6 +36,41 @@ const Header: React.FC<HeaderProps> = (props) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const tabletMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const laptopMenuButtonRef = useRef<HTMLButtonElement>(null);
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      
+      // Close mobile menu if clicking outside both the menu and its trigger buttons
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(target) &&
+          !mobileMenuButtonRef.current?.contains(target) &&
+          !tabletMenuButtonRef.current?.contains(target) &&
+          !laptopMenuButtonRef.current?.contains(target)) {
+        setIsMobileMenuOpen(false);
+      }
+      
+      // Close user menu if clicking outside
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    // Only add listener if either menu is open
+    if (isMobileMenuOpen || isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMobileMenuOpen, isUserMenuOpen]);
 
   // Handle opening team modal
   const handleOpenTeam = () => {
@@ -80,19 +115,26 @@ const Header: React.FC<HeaderProps> = (props) => {
   };
 
   // Toggle mobile menu
-  const toggleMobileMenu = () => {
+  const toggleMobileMenu = (e?: React.MouseEvent) => {
+    // Prevent event from bubbling up to document click handler
+    if (e) {
+      e.stopPropagation();
+    }
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen);
+    // Close mobile menu if it's open
+    if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
   return (
     <header className="bg-white shadow relative">
-      {/* Reduced padding for minimalist design */}
       <div className="max-w-full mx-auto px-4 py-2 sm:px-6 lg:px-8">
-        {/* Flexible single row layout */}
         <div className="flex items-center justify-between min-h-12 gap-2">
-          
-          {/* Left section - Back button and title only */}
-          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+          {/* Left section - Back button and title - always visible */}
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
             {showBackButton && (
               <button
                 onClick={() => window.history.back()}
@@ -102,7 +144,8 @@ const Header: React.FC<HeaderProps> = (props) => {
               </button>
             )}
 
-            <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-900 truncate min-w-0">
+            {/* Project title - always visible, responsive sizing */}
+            <h1 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-900 truncate min-w-0">
               {projectName || "Notionesque"}
             </h1>
           </div>
@@ -159,28 +202,26 @@ const Header: React.FC<HeaderProps> = (props) => {
                 <HistoryControls />
               </div>
             </WriteGuard>
-            
+
             {/* Desktop actions - visible on larger screens */}
             <div className="hidden xl:flex items-center space-x-2">
               {/* Compact view mode toggle */}
               <div className="flex bg-gray-100 rounded-md p-1">
                 <button
                   onClick={() => handleViewModeChange('list')}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    viewMode === 'list'
+                  className={`px-2 py-1 text-xs rounded transition-colors ${viewMode === 'list'
                       ? 'bg-white text-gray-800 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                    }`}
                 >
                   List
                 </button>
                 <button
                   onClick={() => handleViewModeChange('kanban')}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    viewMode === 'kanban'
+                  className={`px-2 py-1 text-xs rounded transition-colors ${viewMode === 'kanban'
                       ? 'bg-white text-gray-800 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                    }`}
                 >
                   Board
                 </button>
@@ -220,21 +261,19 @@ const Header: React.FC<HeaderProps> = (props) => {
               <div className="flex bg-gray-100 rounded-md p-1">
                 <button
                   onClick={() => handleViewModeChange('list')}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    viewMode === 'list'
+                  className={`px-2 py-1 text-xs rounded transition-colors ${viewMode === 'list'
                       ? 'bg-white text-gray-800 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                    }`}
                 >
                   List
                 </button>
                 <button
                   onClick={() => handleViewModeChange('kanban')}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    viewMode === 'kanban'
+                  className={`px-2 py-1 text-xs rounded transition-colors ${viewMode === 'kanban'
                       ? 'bg-white text-gray-800 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                    }`}
                 >
                   Board
                 </button>
@@ -242,6 +281,7 @@ const Header: React.FC<HeaderProps> = (props) => {
 
               {/* Menu button for filters on laptop */}
               <button
+                ref={laptopMenuButtonRef}
                 onClick={toggleMobileMenu}
                 className="h-8 w-8 flex items-center justify-center text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
               >
@@ -254,21 +294,19 @@ const Header: React.FC<HeaderProps> = (props) => {
               <div className="flex bg-gray-100 rounded-md p-1">
                 <button
                   onClick={() => handleViewModeChange('list')}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    viewMode === 'list'
+                  className={`px-2 py-1 text-xs rounded transition-colors ${viewMode === 'list'
                       ? 'bg-white text-gray-800 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                    }`}
                 >
                   List
                 </button>
                 <button
                   onClick={() => handleViewModeChange('kanban')}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    viewMode === 'kanban'
+                  className={`px-2 py-1 text-xs rounded transition-colors ${viewMode === 'kanban'
                       ? 'bg-white text-gray-800 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                    }`}
                 >
                   Board
                 </button>
@@ -276,6 +314,7 @@ const Header: React.FC<HeaderProps> = (props) => {
 
               {/* Menu button for filters on tablet */}
               <button
+                ref={tabletMenuButtonRef}
                 onClick={toggleMobileMenu}
                 className="h-8 w-8 flex items-center justify-center text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
               >
@@ -286,6 +325,7 @@ const Header: React.FC<HeaderProps> = (props) => {
             {/* Mobile hamburger menu */}
             <div className="md:hidden">
               <button
+                ref={mobileMenuButtonRef}
                 onClick={toggleMobileMenu}
                 className="h-8 w-8 flex items-center justify-center text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
               >
@@ -341,9 +381,9 @@ const Header: React.FC<HeaderProps> = (props) => {
 
             {/* User profile dropdown */}
             {isAuthenticated && user && (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  onClick={toggleUserMenu}
                   className="flex items-center space-x-1 h-8 px-2 rounded-md hover:bg-gray-100 transition-colors"
                 >
                   {user.picture && (
@@ -367,11 +407,10 @@ const Header: React.FC<HeaderProps> = (props) => {
                         <div className="text-sm font-medium text-gray-900">{user.name}</div>
                         {currentProject && (
                           <div className="text-xs text-gray-500 mt-1">
-                            Role: <span className={`font-medium ${
-                              permissions.userRole === 'owner' ? 'text-red-600' :
-                              permissions.userRole === 'editor' ? 'text-blue-600' :
-                              'text-gray-600'
-                            }`}>
+                            Role: <span className={`font-medium ${permissions.userRole === 'owner' ? 'text-red-600' :
+                                permissions.userRole === 'editor' ? 'text-blue-600' :
+                                  'text-gray-600'
+                              }`}>
                               {permissions.userRole}
                             </span>
                           </div>
@@ -396,9 +435,12 @@ const Header: React.FC<HeaderProps> = (props) => {
 
         {/* Enhanced Mobile/Tablet/User dropdown menu */}
         {isMobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+          <div
+            className="absolute top-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50"
+            ref={mobileMenuRef}
+          >
             <div className="px-4 py-3 space-y-3">
-              
+
               {/* Mobile view toggle */}
               <div className="md:hidden">
                 <div className="flex bg-gray-100 rounded-md p-1">
@@ -407,11 +449,10 @@ const Header: React.FC<HeaderProps> = (props) => {
                       handleViewModeChange('list');
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
-                      viewMode === 'list'
+                    className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${viewMode === 'list'
                         ? 'bg-white text-gray-800 shadow-sm'
                         : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                      }`}
                   >
                     List View
                   </button>
@@ -420,11 +461,10 @@ const Header: React.FC<HeaderProps> = (props) => {
                       handleViewModeChange('kanban');
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
-                      viewMode === 'kanban'
+                    className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${viewMode === 'kanban'
                         ? 'bg-white text-gray-800 shadow-sm'
                         : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                      }`}
                   >
                     Board View
                   </button>
@@ -471,32 +511,6 @@ const Header: React.FC<HeaderProps> = (props) => {
                 </div>
               </div>
 
-              {/* User actions and role info */}
-              {isAuthenticated && user && (
-                <div className="pt-2 border-t border-gray-200">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-700 font-medium">{user.name}</span>
-                    {currentProject && (
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
-                        permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {permissions.userRole}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
 
               {/* Mobile read-only indicator */}
               {currentProject && !permissions.canWrite && (
@@ -508,13 +522,6 @@ const Header: React.FC<HeaderProps> = (props) => {
           </div>
         )}
 
-        {/* Click overlay to close mobile menu */}
-        {isMobileMenuOpen && (
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
       </div>
     </header>
   );
