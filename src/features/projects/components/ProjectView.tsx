@@ -88,6 +88,13 @@ const ProjectView: React.FC = () => {
 
         if (isMounted) {
 
+          console.log('🎯 Setting current project in ProjectView:', {
+            id: project.id,
+            name: project.name,
+            userRole: project.userRole,
+            canWrite: project.canWrite
+          });
+
           dispatch(clearHistory());
 
 

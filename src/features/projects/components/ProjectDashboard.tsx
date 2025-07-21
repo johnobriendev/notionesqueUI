@@ -99,6 +99,13 @@ const ProjectDashboard: React.FC = () => {
       }))
         .unwrap()
         .then((newProject) => {
+          console.log('🎯 Created project response:', {
+            id: newProject.id,
+            name: newProject.name,
+            userRole: newProject.userRole,
+            canWrite: newProject.canWrite
+          });
+
           handleCloseForm();
           // Navigate to the new project
           handleSelectProject(newProject);
@@ -150,6 +157,13 @@ const ProjectDashboard: React.FC = () => {
   };
 
   const handleSelectProject = (project: Project) => {
+    console.log('🎯 Selecting project:', {
+      id: project.id,
+      name: project.name,
+      userRole: project.userRole,
+      canWrite: project.canWrite
+    });
+
     dispatch(setCurrentProject(project));
     dispatch(setCurrentProjectId(project.id));
     navigate(`/projects/${project.id}`);
@@ -355,7 +369,7 @@ const ProjectDashboard: React.FC = () => {
             {projects.map((project) => {
               // Get permissions for each project
               const permissions = getProjectPermissions(project);
-              
+
               return (
                 <div
                   key={project.id}
@@ -365,12 +379,11 @@ const ProjectDashboard: React.FC = () => {
                   <div className="p-6 flex-grow">
                     <div className="flex items-start justify-between mb-2">
                       <h2 className="text-xl font-semibold text-gray-800 line-clamp-1 flex-1">{project.name}</h2>
-                    
-                      <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
-                        permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
+
+                      <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
                         permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                          'bg-gray-100 text-gray-800'
+                        }`}>
                         {permissions.userRole}
                       </span>
                     </div>
@@ -395,7 +408,7 @@ const ProjectDashboard: React.FC = () => {
                   {/* Card footer - Now consistent height regardless of card content */}
                   <div className="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
                     <div className="space-x-3">
-                      
+
                       {permissions.canWrite && (
                         <button
                           onClick={() => handleOpenEditForm(project)}
@@ -409,7 +422,7 @@ const ProjectDashboard: React.FC = () => {
                           </span>
                         </button>
                       )}
-                      
+
                       {permissions.canDeleteProject && (
                         <button
                           onClick={() => handleDeleteProject(project)}
@@ -423,7 +436,7 @@ const ProjectDashboard: React.FC = () => {
                           </span>
                         </button>
                       )}
-                      
+
                       {!permissions.canWrite && !permissions.canDeleteProject && (
                         <span className="text-xs text-gray-500 italic">Read-only access</span>
                       )}
