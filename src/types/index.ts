@@ -64,9 +64,15 @@ export interface ProjectMember {
 export interface Invitation {
   id: string;
   projectId: string;
-  projectName: string;
-  inviterEmail: string;
-  inviteeEmail: string;
+  project: {
+    name: string;
+    description?: string;
+  };
+  sender: {
+    email: string;
+    name?: string;
+  };
+  receiverEmail: string;
   role: UserRole;
   status: InvitationStatus;
   token: string;

@@ -165,14 +165,14 @@ const InvitationsPanel: React.FC<InvitationsPanelProps> = ({ isOpen }) => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-medium text-gray-900">{invitation.projectName}</h3>
+                        <h3 className="font-medium text-gray-900">{invitation.project?.name}</h3>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(invitation.role)}`}>
                           {invitation.role}
                         </span>
                       </div>
 
                       <p className="text-sm text-gray-600 mb-1">
-                        Invited by <span className="font-medium">{invitation.inviterEmail}</span>
+                        Invited by <span className="font-medium">{invitation.sender?.email}</span>
                       </p>
 
                       <div className="flex items-center text-xs text-gray-400 space-x-4">
@@ -184,7 +184,7 @@ const InvitationsPanel: React.FC<InvitationsPanelProps> = ({ isOpen }) => {
                     {/* Action Buttons */}
                     <div className="flex space-x-2 ml-4">
                       <button
-                        onClick={() => handleAccept(invitation.token, invitation.projectName)}
+                        onClick={() => handleAccept(invitation.token, invitation.project?.name)}
                         disabled={processingInvitation === invitation.token}
                         className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                       >
@@ -202,7 +202,7 @@ const InvitationsPanel: React.FC<InvitationsPanelProps> = ({ isOpen }) => {
                       </button>
 
                       <button
-                        onClick={() => handleDecline(invitation.id, invitation.projectName)}
+                        onClick={() => handleDecline(invitation.id, invitation.project?.name)}
                         disabled={processingInvitation === invitation.id}
                         className="px-3 py-1 text-gray-600 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                       >
