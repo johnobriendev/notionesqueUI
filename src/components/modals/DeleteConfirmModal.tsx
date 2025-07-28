@@ -75,8 +75,8 @@ const DeleteConfirmModal: React.FC = () => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full">
+    <div className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50">
+      <div className="bg-white border rounded-lg p-6 max-w-md w-full">
         <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
 
         {error && (

@@ -67,7 +67,7 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50"
       onClick={(e) => {
         // Only close if the click is on the backdrop, not on the modal itself
         if (e.target === e.currentTarget) {
@@ -75,7 +75,7 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
         }
       }}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white border rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <div className="flex items-center space-x-3">

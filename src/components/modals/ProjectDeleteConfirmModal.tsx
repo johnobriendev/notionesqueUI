@@ -55,10 +55,10 @@ const ProjectDeleteConfirmModal: React.FC<ProjectDeleteConfirmModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+      <div className="bg-white border rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
         <div className="mb-4">
           <div className="flex items-center mb-4">
             <div className="flex-shrink-0">
