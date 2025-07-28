@@ -54,6 +54,12 @@ const InvitationsPanel: React.FC<InvitationsPanelProps> = ({ isOpen }) => {
     dispatch(closeInvitationsPanel());
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   const handleAccept = async (invitationToken: string, projectName: string) => {
     console.log('Attempting to accept invitation with token:', invitationToken);
     setProcessingInvitation(invitationToken);
@@ -103,7 +109,10 @@ const InvitationsPanel: React.FC<InvitationsPanelProps> = ({ isOpen }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white border rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">

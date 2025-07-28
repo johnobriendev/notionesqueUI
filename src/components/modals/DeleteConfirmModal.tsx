@@ -25,6 +25,12 @@ const DeleteConfirmModal: React.FC = () => {
     dispatch(closeDeleteConfirm());
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && !isDeleting) {
+      handleClose();
+    }
+  };
+
   // Confirm deletion
   const handleConfirmDelete = async () => {
     if (!currentProject) {
@@ -39,24 +45,24 @@ const DeleteConfirmModal: React.FC = () => {
       if (isMultiDelete) {
         // 🎯 UPDATED: Use bulkDeleteTasksCommand instead of direct thunk
         console.log('🎯 Creating BULK DELETE command for', deletingTaskIds.length, 'tasks');
-        
+
         const command = bulkDeleteTasksCommand({
           projectId: currentProject.id,
           taskIds: deletingTaskIds
         });
-        
+
         await dispatch(executeCommand(command)).unwrap();
         console.log('✅ Bulk delete command executed successfully');
-        
+
       } else if (deletingTaskId) {
         // 🎯 UPDATED: Use deleteTaskCommand instead of direct thunk
         //console.log('🎯 Creating DELETE command for task:', deletingTaskId);
-        
+
         const command = deleteTaskCommand({
           projectId: currentProject.id,
           taskId: deletingTaskId
         });
-        
+
         await dispatch(executeCommand(command)).unwrap();
         //console.log('✅ Delete command executed successfully');
       }
@@ -75,7 +81,10 @@ const DeleteConfirmModal: React.FC = () => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white border rounded-lg p-6 max-w-md w-full">
         <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
 

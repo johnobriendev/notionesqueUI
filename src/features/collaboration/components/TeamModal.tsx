@@ -85,6 +85,13 @@ const TeamModal: React.FC = () => {
     dispatch(closeTeamModal());
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentProject || !email.trim()) return;
@@ -129,7 +136,7 @@ const TeamModal: React.FC = () => {
       setSuccessMessage(`${editingMember.email}'s role updated to ${newRole}!`);
       setShowRoleModal(false);
       setEditingMember(null);
-      
+
       // 🔧 FIX: Refresh the member list to show updated data
       dispatch(fetchProjectMembers(currentProject.id));
     } catch (error) {
@@ -153,7 +160,7 @@ const TeamModal: React.FC = () => {
       })).unwrap();
 
       setSuccessMessage(`${member.email} has been removed from the project.`);
-      
+
       // 🔧 FIX: Refresh the member list to show updated data
       dispatch(fetchProjectMembers(currentProject.id));
     } catch (error) {
@@ -165,7 +172,10 @@ const TeamModal: React.FC = () => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0  bg-black/10 backdrop-blur-xs flex items-center justify-center z-50"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white border rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -174,11 +184,10 @@ const TeamModal: React.FC = () => {
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <span>{members.length} member{members.length !== 1 ? 's' : ''}</span>
               <span>•</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
-                permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${permissions.userRole === 'owner' ? 'bg-red-100 text-red-800' :
+                  permissions.userRole === 'editor' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                }`}>
                 Your role: {permissions.userRole}
               </span>
             </div>
@@ -309,11 +318,10 @@ const TeamModal: React.FC = () => {
 
                   {/* Role and Actions */}
                   <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      member.role === 'owner' ? 'bg-red-100 text-red-800' :
-                      member.role === 'editor' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${member.role === 'owner' ? 'bg-red-100 text-red-800' :
+                        member.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                      }`}>
                       {member.role}
                     </span>
 
