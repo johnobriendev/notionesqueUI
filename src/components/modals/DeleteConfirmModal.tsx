@@ -91,7 +91,7 @@ const DeleteConfirmModal: React.FC = () => {
             : 'Are you sure you want to delete this task?'
           }
           <br />
-          <span className="text-red-600 font-medium">This action cannot be undone.</span>
+          {/* <span className="text-red-600 font-medium">This action cannot be undone.</span> */}
         </p>
 
         <div className="flex justify-end space-x-3">
