@@ -1,5 +1,5 @@
-// src/views/KanbanView.tsx
-import React, { useState } from 'react';
+// src/views/KanbanView.tsx - Fixed Container and Scrolling
+import React, { useState, useEffect, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { openTaskModal, openTaskDetail, openDeleteConfirm } from '../features/ui/store/uiSlice';
@@ -13,7 +13,6 @@ import { getProjectPermissions } from '../lib/permissions';
 
 const KanbanView: React.FC = () => {
   const dispatch = useAppDispatch();
-
 
   const tasksByPriority = useAppSelector(selectTasksByPriority);
   const currentProject = useAppSelector(selectCurrentProject);
@@ -30,6 +29,39 @@ const KanbanView: React.FC = () => {
   // State to track which column has an active input
   const [activeInputColumn, setActiveInputColumn] = useState<TaskPriority | null>(null);
 
+  // Ref for click outside detection
+  const createTaskRefs = useRef<Record<TaskPriority, HTMLDivElement | null>>({
+    none: null,
+    low: null,
+    medium: null,
+    high: null,
+    urgent: null
+  });
+
+  // Handle click outside to close create task forms
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activeInputColumn) {
+        const activeRef = createTaskRefs.current[activeInputColumn];
+        if (activeRef && !activeRef.contains(event.target as Node)) {
+          setActiveInputColumn(null);
+          // Reset the input when closing
+          setNewTaskInputs(prev => ({
+            ...prev,
+            [activeInputColumn]: ''
+          }));
+        }
+      }
+    };
+
+    if (activeInputColumn) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeInputColumn]);
 
   const handleDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
@@ -62,7 +94,7 @@ const KanbanView: React.FC = () => {
 
     try {
       if (sourcePriority !== destinationPriority) {
-        // 🎯 UPDATED: Moving between columns - use updateTaskPriorityCommand
+        // Moving between columns - use updateTaskPriorityCommand
         console.log('🔄 Moving between columns - using command pattern');
 
         const command = updateTaskPriorityCommand({
@@ -76,7 +108,7 @@ const KanbanView: React.FC = () => {
         console.log('✅ Priority update command executed successfully');
 
       } else {
-        // 🎯 UPDATED: Reordering within the same column - use reorderTasksCommand
+        // Reordering within the same column - use reorderTasksCommand
         console.log('🔄 Reordering within column - using command pattern');
 
         const columnTasks = tasksByPriority[sourcePriority];
@@ -103,8 +135,6 @@ const KanbanView: React.FC = () => {
 
     } catch (error) {
       console.error('❌ Drag & drop command failed:', error);
-      // The command system will handle the error state
-      // The UI should show an error message or revert the optimistic update
     }
   };
 
@@ -132,7 +162,6 @@ const KanbanView: React.FC = () => {
     }
 
     try {
-      // 🎯 UPDATED: Use createTaskCommand instead of direct thunk
       console.log('🎯 Creating CREATE command for Kanban quick-add:', title);
 
       const command = createTaskCommand({
@@ -207,7 +236,6 @@ const KanbanView: React.FC = () => {
     dispatch(openDeleteConfirm(taskId));
   };
 
-
   // Show a message if no project is selected
   if (!currentProject) {
     return (
@@ -221,149 +249,175 @@ const KanbanView: React.FC = () => {
   }
 
   return (
-    <div className="h-full flex justify-center align-center">
+    // 🔄 UPDATED: Center the kanban board on large screens
+    <div className="h-full flex flex-col">
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex space-x-4 overflow-x-auto pb-4">
-          {Object.entries(tasksByPriority).map(([priority, priorityTasks]) => (
-            <div
-              key={priority}
-              className={`flex-shrink-0 w-72 rounded-lg border-t-4 ${getPriorityColorClass(priority as TaskPriority)}`}
-            >
-              <div className="bg-white rounded-b-lg shadow h-full flex flex-col">
-                <div className="p-3 border-b bg-gray-50">
-                  <h3 className="font-medium">
-                    {getPriorityName(priority as TaskPriority)} ({priorityTasks.length})
-                  </h3>
-                </div>
 
-                <Droppable droppableId={priority}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`flex-1 p-2 overflow-y-auto min-h-[200px] ${snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
-                        }`}
-                    >
-                      {priorityTasks.length === 0 ? (
-                        <p className="text-gray-400 text-sm text-center py-4">
-                          No tasks
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {priorityTasks.map((task, index) => (
-                            <Draggable
-                              key={task.id}
-                              draggableId={task.id}
-                              index={index}
-                            >
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className={`${snapshot.isDragging ? 'opacity-70' : ''}`}
-                                >
-                                  <div className="bg-white rounded shadow p-3 border border-gray-200 hover:shadow-md transition-shadow">
-                                    <div className="flex justify-between items-start">
-                                      <h4
-                                        className="font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                                        onClick={() => dispatch(openTaskDetail(task.id))}
-                                      >
-                                        {task.title}
-                                      </h4>
-                                    </div>
+        <div
+          className="flex-1 overflow-x-auto overflow-y-hidden"
+          style={{
+            touchAction: 'pan-x pan-y',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
 
-                                    {task.description && (
-                                      <p className="mt-1 text-sm text-gray-600 line-clamp-2">{task.description}</p>
-                                    )}
+          <div className="flex h-full gap-3 px-2 py-1 justify-center min-w-full" style={{ minWidth: 'max-content' }}>
+            {Object.entries(tasksByPriority).map(([priority, priorityTasks]) => (
+              <div
+                key={priority}
+                className={`flex-shrink-0 w-72 rounded-lg border-t-4 h-full ${getPriorityColorClass(priority as TaskPriority)}`}
+              >
+                <div className="bg-white rounded-b-lg shadow h-full flex flex-col">
+                  {/* Column header */}
+                  <div className="p-3 border-b bg-gray-50 flex-shrink-0">
+                    <h3 className="font-semibold text-gray-800 text-sm">
+                      {getPriorityName(priority as TaskPriority)} ({priorityTasks.length})
+                    </h3>
+                  </div>
 
-                                    <div className="mt-3 flex items-center justify-between">
-                                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(task.status)}`}>
-                                        {task.status}
-                                      </span>
+                  {/* Scrollable tasks area */}
+                  <Droppable droppableId={priority}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`flex-1 p-2 overflow-y-auto ${snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
+                          }`}
+                        style={{ minHeight: '200px' }}
+                      >
+                        {priorityTasks.length === 0 ? (
+                          <div className="flex items-center justify-center h-32">
+                            <p className="text-gray-400 text-sm text-center">
+                              No tasks
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {priorityTasks.map((task, index) => (
+                              <Draggable
+                                key={task.id}
+                                draggableId={task.id}
+                                index={index}
+                              >
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className={`${snapshot.isDragging ? 'opacity-70 rotate-3 scale-105' : ''
+                                      } transition-all duration-200`}
+                                  >
+                                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow p-3">
+                                      <div className="flex justify-between items-start mb-2">
+                                        <h4
+                                          className="font-medium text-gray-900 cursor-pointer hover:text-blue-600 line-clamp-2 flex-1 text-sm"
+                                          onClick={() => dispatch(openTaskDetail(task.id))}
+                                        >
+                                          {task.title}
+                                        </h4>
+                                      </div>
 
-                                      <div className="flex space-x-2">
+                                      {task.description && (
+                                        <p className="mt-2 text-xs text-gray-600 line-clamp-2">
+                                          {task.description}
+                                        </p>
+                                      )}
+
+                                      <div className="mt-3 flex items-center justify-between">
+                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(task.status)}`}>
+                                          {task.status}
+                                        </span>
+
                                         <WriteGuard>
-                                          <button
-                                            onClick={() => handleEditTask(task.id)}
-                                            className="text-indigo-600 hover:text-indigo-900 text-sm"
-                                          >
-                                            Edit
-                                          </button>
-                                          <button
-                                            onClick={() => handleDeleteTask(task.id)}
-                                            className="text-red-600 hover:text-red-900 text-sm"
-                                          >
-                                            Delete
-                                          </button>
+                                          <div className="flex space-x-2">
+                                            <button
+                                              onClick={() => handleEditTask(task.id)}
+                                              className="text-indigo-600 hover:text-indigo-900 text-xs"
+                                            >
+                                              Edit
+                                            </button>
+                                            <button
+                                              onClick={() => handleDeleteTask(task.id)}
+                                              className="text-red-600 hover:text-red-900 text-xs"
+                                            >
+                                              Delete
+                                            </button>
+                                          </div>
                                         </WriteGuard>
                                       </div>
-                                    </div>
 
-                                    {/* Custom fields (if any) */}
-                                    {Object.keys(task.customFields).length > 0 && (
-                                      <div className="mt-2 pt-2 border-t border-gray-200">
-                                        <p className="text-xs text-gray-500 font-medium">Custom fields:</p>
-                                        <div className="mt-1 text-xs text-gray-600">
-                                          {Object.entries(task.customFields).map(([key, value]) => (
-                                            <div key={key}>
-                                              <span className="font-medium">{key}:</span> {String(value)}
-                                            </div>
-                                          ))}
+                                      {/* Custom fields (if any) */}
+                                      {Object.keys(task.customFields).length > 0 && (
+                                        <div className="mt-2 pt-2 border-t border-gray-200">
+                                          <p className="text-xs text-gray-500 font-medium mb-1">Custom fields:</p>
+                                          <div className="text-xs text-gray-600 space-y-1">
+                                            {Object.entries(task.customFields).map(([key, value]) => (
+                                              <div key={key} className="flex justify-between">
+                                                <span className="font-medium">{key}:</span>
+                                                <span className="truncate ml-2">{String(value)}</span>
+                                              </div>
+                                            ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                        </div>
-                      )}
-                      {provided.placeholder}
-
-                      {/* Quick Add Task Input */}
-                      {activeInputColumn === priority as TaskPriority ? (
-                        <div className="mt-2 p-2 bg-white rounded shadow border border-gray-200">
-                          <textarea
-                            value={newTaskInputs[priority as TaskPriority]}
-                            onChange={(e) => handleInputChange(priority as TaskPriority, e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e, priority as TaskPriority)}
-                            placeholder="Enter task title"
-                            className="w-full p-2 border border-gray-300 rounded mb-2 resize-y min-h-[60px]"
-                            autoFocus
-                          />
-                          <div className="flex justify-between">
-                            <button
-                              onClick={() => handleCreateTask(priority as TaskPriority)}
-                              className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                            >
-                              Add
-                            </button>
-                            <button
-                              onClick={handleCancelTask}
-                              className="px-3 py-1 text-gray-600 rounded text-sm hover:bg-gray-100"
-                            >
-                              Cancel
-                            </button>
+                                )}
+                              </Draggable>
+                            ))}
                           </div>
+                        )}
+                        {provided.placeholder}
+
+                        {/* Quick Add Task Input */}
+                        <div className="mt-2">
+                          {activeInputColumn === priority as TaskPriority ? (
+                            <div
+                              ref={(el) => createTaskRefs.current[priority as TaskPriority] = el}
+                              className="p-3 bg-white rounded-lg shadow-sm border border-gray-200"
+                            >
+                              <textarea
+                                value={newTaskInputs[priority as TaskPriority]}
+                                onChange={(e) => handleInputChange(priority as TaskPriority, e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(e, priority as TaskPriority)}
+                                placeholder="Enter task title..."
+                                className="w-full p-2 text-sm border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                rows={2}
+                                autoFocus
+                              />
+                              <div className="flex justify-between mt-2">
+                                <button
+                                  onClick={() => handleCreateTask(priority as TaskPriority)}
+                                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                                >
+                                  Add Task
+                                </button>
+                                <button
+                                  onClick={handleCancelTask}
+                                  className="px-3 py-1 text-gray-600 text-sm rounded hover:bg-gray-100 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <WriteGuard>
+                              <button
+                                onClick={() => handleShowInput(priority as TaskPriority)}
+                                className="w-full p-2 text-blue-600 hover:bg-blue-50 rounded-lg text-sm flex items-center justify-center border-2 border-dashed border-gray-200 hover:border-blue-300 transition-colors"
+                              >
+                                <span className="text-lg mr-1">+</span> Add task
+                              </button>
+                            </WriteGuard>
+                          )}
                         </div>
-                      ) : (
-                        <WriteGuard>
-                          <button
-                            onClick={() => handleShowInput(priority as TaskPriority)}
-                            className="mt-2 w-full p-2 text-blue-600 hover:bg-blue-50 rounded text-sm flex items-center justify-center"
-                          >
-                            <span className="text-lg mr-1">+</span> Add task
-                          </button>
-                        </WriteGuard>
-                      )}
-                    </div>
-                  )}
-                </Droppable>
+                      </div>
+                    )}
+                  </Droppable>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </DragDropContext>
     </div>

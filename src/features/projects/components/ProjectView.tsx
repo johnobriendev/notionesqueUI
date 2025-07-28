@@ -88,7 +88,7 @@ const ProjectView: React.FC = () => {
 
         if (isMounted) {
 
-          
+
 
           dispatch(clearHistory());
 
@@ -146,17 +146,18 @@ const ProjectView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header
-        showBackButton={true}
-        projectName={currentProject.name}
-      />
+      <div className='h-screen flex flex-col'>
+        <Header
+          showBackButton={true}
+          projectName={currentProject.name}
+        />
 
-      <main>
-        <div className="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          {viewMode === 'list' ? <ListView /> : <KanbanView />}
-        </div>
-      </main>
-
+        <main className='flex-1 overflow-hidden'>
+          <div className={`h-full mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-none`}>
+            {viewMode === 'list' ? <ListView /> : <KanbanView />}
+          </div>
+        </main>
+      </div>
       {isTaskDetailOpen && taskBeingViewed && (
         <TaskDetailView
           task={taskBeingViewed}
