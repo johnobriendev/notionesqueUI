@@ -318,25 +318,25 @@ const ListView: React.FC = () => {
                 </th>
               </WriteGuard>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 hover:text-black uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('title')}
               >
                 Title {getSortIndicator('title')}
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 hover:text-black uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('status')}
               >
                 Status {getSortIndicator('status')}
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 hover:text-black uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('priority')}
               >
                 Priority {getSortIndicator('priority')}
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 hover:text-black uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('updatedAt')}
               >
                 Updated {getSortIndicator('updatedAt')}
