@@ -12,6 +12,9 @@ export const getProjectPermissions = (project: Project | null) => {
       canInvite: false,
       canManageTeam: false,
       canDeleteProject: false,
+      isOwner: false,
+      isEditor: false,
+      isViewer: false,
       userRole: 'viewer' as UserRole,
     };
   }
@@ -24,6 +27,9 @@ export const getProjectPermissions = (project: Project | null) => {
     canInvite: userRole === 'owner' || userRole === 'editor', // Owners and editors can invite
     canManageTeam: userRole === 'owner', // Only owners can manage team
     canDeleteProject: userRole === 'owner', // Only owners can delete
+    isOwner: userRole === 'owner',
+    isEditor: userRole === 'editor',
+    isViewer: userRole === 'viewer',
     userRole,
   };
 };
