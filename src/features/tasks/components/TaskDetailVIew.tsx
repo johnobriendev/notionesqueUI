@@ -5,6 +5,7 @@ import { selectCurrentProject } from '../../../features/projects/store/projectsS
 import { Task, TaskStatus, TaskPriority } from '../../../types';
 import { WriteGuard } from '../../../components/common/PermissionGuard';
 import { getProjectPermissions } from '../../../lib/permissions';
+import CommentsSection from '../../comments/components/CommentsSection';
 
 interface TaskDetailViewProps {
   task: Task;
@@ -174,6 +175,15 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
                 </dl>
               </div>
             </div>
+          )}
+
+          {/* Comments Section */}
+          {isTaskInCurrentProject && currentProject && (
+            <CommentsSection
+              projectId={currentProject.id}
+              taskId={task.id}
+              permissions={permissions}
+            />
           )}
         </div>
         

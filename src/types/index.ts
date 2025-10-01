@@ -177,20 +177,24 @@ export interface UiState {
   viewingTaskId: string | null;
   isDeleteConfirmOpen: boolean;
   deletingTaskId: string | null;
-  deletingTaskIds: string[]; 
+  deletingTaskIds: string[];
   isBulkEditOpen: boolean;
   bulkEditType: 'status' | 'priority' | null;
   selectedTaskIds: string[];
   currentProjectId: string | null;
-  
+
   // Collaboration UI state
   isTeamModalOpen: boolean;
   isInviteModalOpen: boolean;
   isInvitationsPanelOpen: boolean;
-  
+
   // Conflict resolution UI
   activeConflicts: string[]; // Task IDs with active conflicts
   conflictBannerVisible: boolean;
+
+  // Comments UI state
+  isDeleteCommentModalOpen: boolean;
+  deletingCommentId: string | null;
 }
 
 export interface CommandHistoryState {
@@ -219,6 +223,30 @@ export interface TaskPermissions {
   canChangeStatus: boolean;
   canChangePriority: boolean;
   canReorder: boolean;
+}
+
+// Comment-related interfaces
+export interface CommentUser {
+  id: string;
+  email: string;
+  name?: string;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  taskId: string;
+  userId: string;
+  user: CommentUser;
+}
+
+// Comments state for Redux
+export interface CommentsState {
+  items: Comment[];
+  isLoading: boolean;
+  error: string | null;
 }
 
 // API Error types for better error handling

@@ -43,6 +43,8 @@ const initialState: UiState = {
   isInvitationsPanelOpen: false,
   activeConflicts: [],
   conflictBannerVisible: false,
+  isDeleteCommentModalOpen: false,
+  deletingCommentId: null,
 };
 
 // Create the slice with reducers
@@ -165,6 +167,16 @@ export const uiSlice = createSlice({
       state.isInvitationsPanelOpen = false;
     },
 
+    // Comment deletion modal
+    openDeleteCommentModal: (state, action: PayloadAction<string>) => {
+      state.isDeleteCommentModalOpen = true;
+      state.deletingCommentId = action.payload;
+    },
+    closeDeleteCommentModal: (state) => {
+      state.isDeleteCommentModalOpen = false;
+      state.deletingCommentId = null;
+    },
+
   }
 });
 
@@ -186,8 +198,10 @@ export const {
   closeBulkEdit,
   openTeamModal,
   closeTeamModal,
-   openInvitationsPanel,   
+  openInvitationsPanel,
   closeInvitationsPanel,
+  openDeleteCommentModal,
+  closeDeleteCommentModal,
 } = uiSlice.actions;
 
 // Export the reducer
