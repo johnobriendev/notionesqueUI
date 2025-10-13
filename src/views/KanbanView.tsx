@@ -261,7 +261,7 @@ const KanbanView: React.FC = () => {
           }}
         >
 
-          <div className="flex h-full gap-3 px-2 py-1 justify-center min-w-full" style={{ minWidth: 'max-content' }}>
+          <div className="flex h-full gap-3 px-2 justify-center min-w-full" style={{ minWidth: 'max-content' }}>
             {Object.entries(tasksByPriority).map(([priority, priorityTasks]) => (
               <div
                 key={priority}
@@ -368,52 +368,52 @@ const KanbanView: React.FC = () => {
                           </div>
                         )}
                         {provided.placeholder}
-
-                        {/* Quick Add Task Input */}
-                        <div className="mt-2">
-                          {activeInputColumn === priority as TaskPriority ? (
-                            <div
-                              ref={(el) => createTaskRefs.current[priority as TaskPriority] = el}
-                              className="p-3 bg-white rounded-lg shadow-sm border border-gray-200"
-                            >
-                              <textarea
-                                value={newTaskInputs[priority as TaskPriority]}
-                                onChange={(e) => handleInputChange(priority as TaskPriority, e.target.value)}
-                                onKeyDown={(e) => handleKeyDown(e, priority as TaskPriority)}
-                                placeholder="Enter task title..."
-                                className="w-full p-2 text-sm border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                rows={2}
-                                autoFocus
-                              />
-                              <div className="flex justify-between mt-2">
-                                <button
-                                  onClick={() => handleCreateTask(priority as TaskPriority)}
-                                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                                >
-                                  Add Task
-                                </button>
-                                <button
-                                  onClick={handleCancelTask}
-                                  className="px-3 py-1 text-gray-600 text-sm rounded hover:bg-gray-100 transition-colors"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <WriteGuard>
-                              <button
-                                onClick={() => handleShowInput(priority as TaskPriority)}
-                                className="w-full p-2 text-blue-600 hover:bg-blue-50 rounded-lg text-sm flex items-center justify-center border-2 border-dashed border-gray-200 hover:border-blue-300 transition-colors"
-                              >
-                                <span className="text-lg mr-1">+</span> Add task
-                              </button>
-                            </WriteGuard>
-                          )}
-                        </div>
                       </div>
                     )}
                   </Droppable>
+
+                  {/* Add Task Button - Fixed at bottom */}
+                  <div className="px-2 py-1.5 border-t bg-gray-50 flex-shrink-0">
+                    {activeInputColumn === priority as TaskPriority ? (
+                      <div
+                        ref={(el) => createTaskRefs.current[priority as TaskPriority] = el}
+                        className="bg-white rounded-lg p-2"
+                      >
+                        <textarea
+                          value={newTaskInputs[priority as TaskPriority]}
+                          onChange={(e) => handleInputChange(priority as TaskPriority, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, priority as TaskPriority)}
+                          placeholder="Enter task title..."
+                          className="w-full p-2 text-sm border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          rows={2}
+                          autoFocus
+                        />
+                        <div className="flex justify-between mt-2">
+                          <button
+                            onClick={() => handleCreateTask(priority as TaskPriority)}
+                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                          >
+                            Add Task
+                          </button>
+                          <button
+                            onClick={handleCancelTask}
+                            className="px-3 py-1 text-gray-600 text-sm rounded hover:bg-gray-100 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <WriteGuard>
+                        <button
+                          onClick={() => handleShowInput(priority as TaskPriority)}
+                          className="w-full py-1.5 px-2 text-blue-600 hover:bg-blue-50 rounded text-sm flex items-center justify-center border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors"
+                        >
+                          <span className="text-base mr-1">+</span> Add task
+                        </button>
+                      </WriteGuard>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
