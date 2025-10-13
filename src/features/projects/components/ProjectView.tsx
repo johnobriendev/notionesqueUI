@@ -152,7 +152,7 @@ const ProjectView: React.FC = () => {
           projectName={currentProject.name}
         />
 
-        <main className='flex-1 md:overflow-hidden'>
+        <main className='flex-1 md:overflow-y-auto'>
           <div className={`h-full mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-none`}>
             {viewMode === 'list' ? <ListView /> : <KanbanView />}
           </div>
