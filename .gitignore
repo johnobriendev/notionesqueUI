@@ -12,7 +12,13 @@ dist
 dist-ssr
 *.local
 .env
+
+# Backend documentation files (temporary implementation guides)
 BACKEND_CHANGES_NEEDED.md
+BACKEND_IMPLEMENTATION_PLAN.md
+BACKEND_CONCERNS_ADDRESSED.md
+BACKEND_QUICK_REFERENCE.md
+BACKEND_SUMMARY.md
 
 # Editor directories and files
 .vscode/*
