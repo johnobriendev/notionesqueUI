@@ -197,6 +197,41 @@ export const updateTaskPriorityAsync = createAsyncThunk(
   }
 );
 
+export const updateTaskStatusAsync = createAsyncThunk(
+  'tasks/updateTaskStatus',
+  async (
+    data: {
+      projectId: string;
+      taskId: string;
+      status: TaskStatus;
+      destinationIndex?: number;
+      version?: number;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const result = await taskService.updateTaskStatus(
+        data.projectId,
+        data.taskId,
+        data.status,
+        data.destinationIndex,
+        data.version
+      );
+
+      return result;
+    } catch (error: any) {
+      if (error.response?.status === 409 && error.response?.data?.error === 'VERSION_CONFLICT') {
+        return rejectWithValue({
+          type: 'VERSION_CONFLICT',
+          conflict: error.response.data.conflict,
+          message: error.response.data.message
+        });
+      }
+      return rejectWithValue(error.response?.data?.message || 'Failed to update task status');
+    }
+  }
+);
+
 export const bulkUpdateTasksAsync = createAsyncThunk(
   'tasks/bulkUpdateTasksAsync',
   async (
@@ -250,6 +285,33 @@ export const reorderTasksAsync = createAsyncThunk(
   }
 );
 
+export const reorderTasksByStatusAsync = createAsyncThunk(
+  'tasks/reorderTasksByStatusAsync',
+  async (
+    data: {
+      projectId: string;
+      status: TaskStatus;
+      taskIds: string[];
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      await taskService.reorderTasksByStatus(
+        data.projectId,
+        data.status,
+        data.taskIds
+      );
+
+      return {
+        status: data.status,
+        taskIds: data.taskIds
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to reorder tasks by status');
+    }
+  }
+);
+
 export const tasksSlice = createSlice({
   name: 'tasks',
   initialState,
@@ -279,6 +341,26 @@ export const tasksSlice = createSlice({
       }
     },
 
+    optimisticUpdateTaskStatus: (state, action: PayloadAction<{
+      taskId: string;
+      status: TaskStatus;
+      destinationIndex?: number;
+    }>) => {
+      const { taskId, status, destinationIndex } = action.payload;
+      const taskIndex = state.items.findIndex(t => t.id === taskId);
+
+      if (taskIndex !== -1) {
+        // Update the task's status immediately
+        state.items[taskIndex] = {
+          ...state.items[taskIndex],
+          status,
+          // Calculate position based on destination index if provided
+          position: destinationIndex ?? state.items[taskIndex].position,
+          updatedAt: new Date().toISOString()
+        };
+      }
+    },
+
     optimisticReorderTasks: (state, action: PayloadAction<{
       priority: TaskPriority;
       taskIds: string[];
@@ -292,6 +374,25 @@ export const tasksSlice = createSlice({
           state.items[taskIndex] = {
             ...state.items[taskIndex],
             position: index,
+            updatedAt: new Date().toISOString()
+          };
+        }
+      });
+    },
+
+    optimisticReorderTasksByStatus: (state, action: PayloadAction<{
+      status: TaskStatus;
+      taskIds: string[];
+    }>) => {
+      const { status, taskIds } = action.payload;
+
+      // Update statusPositions for all tasks in the reordered list
+      taskIds.forEach((taskId, index) => {
+        const taskIndex = state.items.findIndex(t => t.id === taskId);
+        if (taskIndex !== -1) {
+          state.items[taskIndex] = {
+            ...state.items[taskIndex],
+            statusPosition: index,
             updatedAt: new Date().toISOString()
           };
         }
@@ -404,6 +505,23 @@ export const tasksSlice = createSlice({
         state.error = action.payload as string || 'Failed to update task priority';
       })
 
+      // Update task status
+      .addCase(updateTaskStatusAsync.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateTaskStatusAsync.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const index = state.items.findIndex(t => t.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(updateTaskStatusAsync.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string || 'Failed to update task status';
+      })
+
       // Bulk update tasks
       .addCase(bulkUpdateTasksAsync.pending, (state) => {
         state.isLoading = true;
@@ -452,6 +570,30 @@ export const tasksSlice = createSlice({
         state.error = action.payload as string || 'Failed to reorder tasks';
       })
 
+      // Reorder tasks by status
+      .addCase(reorderTasksByStatusAsync.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(reorderTasksByStatusAsync.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const { taskIds } = action.payload;
+        taskIds.forEach((taskId, index) => {
+          const taskIndex = state.items.findIndex(task => task.id === taskId);
+          if (taskIndex !== -1) {
+            state.items[taskIndex] = {
+              ...state.items[taskIndex],
+              statusPosition: index,
+              updatedAt: new Date().toISOString()
+            };
+          }
+        });
+      })
+      .addCase(reorderTasksByStatusAsync.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string || 'Failed to reorder tasks by status';
+      })
+
       // Delete multiple tasks
       .addCase(deleteTasksAsync.pending, (state) => {
         state.isLoading = true;
@@ -473,7 +615,9 @@ export const tasksSlice = createSlice({
 export const {
   clearTasks,
   optimisticUpdateTaskPriority,
+  optimisticUpdateTaskStatus,
   optimisticReorderTasks,
+  optimisticReorderTasksByStatus,
   revertOptimisticUpdate,
   revertOptimisticReorder
 } = tasksSlice.actions;
@@ -555,6 +699,23 @@ export const selectTasksByPriority = createSelector(
       acc[priority] = priorityTasks;
       return acc;
     }, {} as Record<TaskPriority, Task[]>);
+  }
+);
+
+// Memoized selector for tasks grouped by status
+export const selectTasksByStatus = createSelector(
+  [selectFilteredTasks],
+  (tasks: Task[]) => {
+    const statuses: TaskStatus[] = ['not started', 'in progress', 'completed'];
+
+    return statuses.reduce((acc, status) => {
+      const statusTasks = tasks
+        .filter((task: Task) => task.status === status)
+        .sort((a: Task, b: Task) => (a.statusPosition || 0) - (b.statusPosition || 0));
+
+      acc[status] = statusTasks;
+      return acc;
+    }, {} as Record<TaskStatus, Task[]>);
   }
 );
 

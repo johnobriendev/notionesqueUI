@@ -2,38 +2,52 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { openTaskModal, openTaskDetail, openDeleteConfirm } from '../features/ui/store/uiSlice';
-import { selectTasksByPriority } from '../features/tasks/store/tasksSlice';
+import { openTaskModal, openTaskDetail, openDeleteConfirm, selectKanbanGroupBy } from '../features/ui/store/uiSlice';
+import { selectTasksByPriority, selectTasksByStatus } from '../features/tasks/store/tasksSlice';
 import { selectCurrentProject } from '../features/projects/store/projectsSlice';
 import { TaskPriority, TaskStatus, Task } from '../types';
 import { executeCommand } from '../features/commands/store/commandSlice';
-import { createTaskCommand, updateTaskPriorityCommand, reorderTasksCommand } from '../features/commands/taskCommands';
+import { createTaskCommand, updateTaskPriorityCommand, updateTaskStatusCommand, reorderTasksCommand, reorderTasksByStatusCommand } from '../features/commands/taskCommands';
 import { WriteGuard } from '../components/common/PermissionGuard';
 import { getProjectPermissions } from '../lib/permissions';
 
 const KanbanView: React.FC = () => {
   const dispatch = useAppDispatch();
 
+  const kanbanGroupBy = useAppSelector(selectKanbanGroupBy);
   const tasksByPriority = useAppSelector(selectTasksByPriority);
+  const tasksByStatus = useAppSelector(selectTasksByStatus);
   const currentProject = useAppSelector(selectCurrentProject);
 
+  // Determine which grouping to use
+  const taskGroups = kanbanGroupBy === 'priority' ? tasksByPriority : tasksByStatus;
+  const columnIds = kanbanGroupBy === 'priority'
+    ? (['low', 'medium', 'high', 'urgent'] as const)
+    : (['not started', 'in progress', 'completed'] as const);
+
   // State for quick add task inputs in each column
-  const [newTaskInputs, setNewTaskInputs] = useState<Record<TaskPriority, string>>({
+  const [newTaskInputs, setNewTaskInputs] = useState<Record<string, string>>({
     low: '',
     medium: '',
     high: '',
-    urgent: ''
+    urgent: '',
+    'not started': '',
+    'in progress': '',
+    'completed': ''
   });
 
   // State to track which column has an active input
-  const [activeInputColumn, setActiveInputColumn] = useState<TaskPriority | null>(null);
+  const [activeInputColumn, setActiveInputColumn] = useState<string | null>(null);
 
   // Ref for click outside detection
-  const createTaskRefs = useRef<Record<TaskPriority, HTMLDivElement | null>>({
+  const createTaskRefs = useRef<Record<string, HTMLDivElement | null>>({
     low: null,
     medium: null,
     high: null,
-    urgent: null
+    urgent: null,
+    'not started': null,
+    'in progress': null,
+    'completed': null
   });
 
   // Handle click outside to close create task forms
@@ -75,60 +89,95 @@ const KanbanView: React.FC = () => {
 
     if (!currentProject) return;
 
-    // Get the priority from the droppable ID (column ID)
-    const sourcePriority = source.droppableId as TaskPriority;
-    const destinationPriority = destination.droppableId as TaskPriority;
-
     // Get the task ID from the draggable ID
     const taskId = result.draggableId;
 
     console.log('🎯 DRAG END:', {
-      sourcePriority,
-      destinationPriority,
+      groupBy: kanbanGroupBy,
+      source: source.droppableId,
+      destination: destination.droppableId,
       taskId,
       sourceIndex: source.index,
       destinationIndex: destination.index
     });
 
     try {
-      if (sourcePriority !== destinationPriority) {
-        // Moving between columns - use updateTaskPriorityCommand
-        console.log('🔄 Moving between columns - using command pattern');
+      if (kanbanGroupBy === 'priority') {
+        // Priority-based grouping
+        const sourcePriority = source.droppableId as TaskPriority;
+        const destinationPriority = destination.droppableId as TaskPriority;
 
-        const command = updateTaskPriorityCommand({
-          projectId: currentProject.id,
-          taskId: taskId,
-          priority: destinationPriority,
-          destinationIndex: destination.index
-        });
+        if (sourcePriority !== destinationPriority) {
+          // Moving between columns - use updateTaskPriorityCommand
+          console.log('🔄 Moving between priority columns');
 
-        await dispatch(executeCommand(command)).unwrap();
-        console.log('✅ Priority update command executed successfully');
+          const command = updateTaskPriorityCommand({
+            projectId: currentProject.id,
+            taskId: taskId,
+            priority: destinationPriority,
+            destinationIndex: destination.index
+          });
 
+          await dispatch(executeCommand(command)).unwrap();
+          console.log('✅ Priority update command executed successfully');
+
+        } else {
+          // Reordering within the same priority column
+          console.log('🔄 Reordering within priority column');
+
+          const columnTasks = tasksByPriority[sourcePriority];
+          const reorderedTasks = Array.from(columnTasks);
+          const [movedTask] = reorderedTasks.splice(source.index, 1);
+          reorderedTasks.splice(destination.index, 0, movedTask);
+          const newOrder = reorderedTasks.map(task => task.id);
+
+          const command = reorderTasksCommand({
+            projectId: currentProject.id,
+            priority: sourcePriority,
+            taskIds: newOrder
+          });
+
+          await dispatch(executeCommand(command)).unwrap();
+          console.log('✅ Reorder command executed successfully');
+        }
       } else {
-        // Reordering within the same column - use reorderTasksCommand
-        console.log('🔄 Reordering within column - using command pattern');
+        // Status-based grouping
+        const sourceStatus = source.droppableId as TaskStatus;
+        const destinationStatus = destination.droppableId as TaskStatus;
 
-        const columnTasks = tasksByPriority[sourcePriority];
-        const reorderedTasks = Array.from(columnTasks);
+        if (sourceStatus !== destinationStatus) {
+          // Moving between columns - use updateTaskStatusCommand
+          console.log('🔄 Moving between status columns');
 
-        // Remove the task from its old position
-        const [movedTask] = reorderedTasks.splice(source.index, 1);
+          const command = updateTaskStatusCommand({
+            projectId: currentProject.id,
+            taskId: taskId,
+            status: destinationStatus,
+            destinationIndex: destination.index
+          });
 
-        // Insert the task at its new position
-        reorderedTasks.splice(destination.index, 0, movedTask);
+          await dispatch(executeCommand(command)).unwrap();
+          console.log('✅ Status update command executed successfully');
 
-        // Create an array of task IDs in their new order
-        const newOrder = reorderedTasks.map(task => task.id);
+        } else {
+          // Reordering within the same status column
+          console.log('🔄 Reordering within status column');
 
-        const command = reorderTasksCommand({
-          projectId: currentProject.id,
-          priority: sourcePriority,
-          taskIds: newOrder
-        });
+          const columnTasks = tasksByStatus[sourceStatus];
+          const reorderedTasks = Array.from(columnTasks);
+          const [movedTask] = reorderedTasks.splice(source.index, 1);
+          reorderedTasks.splice(destination.index, 0, movedTask);
+          const newOrder = reorderedTasks.map(task => task.id);
 
-        await dispatch(executeCommand(command)).unwrap();
-        console.log('✅ Reorder command executed successfully');
+          const command = reorderTasksByStatusCommand({
+            projectId: currentProject.id,
+            status: sourceStatus,
+            taskIds: newOrder
+          });
+
+          await dispatch(executeCommand(command)).unwrap();
+          console.log('✅ Reorder command executed successfully');
+        }
       }
 
     } catch (error) {
@@ -137,21 +186,21 @@ const KanbanView: React.FC = () => {
   };
 
   // Handle showing the task input for a specific column
-  const handleShowInput = (priority: TaskPriority) => {
-    setActiveInputColumn(priority);
+  const handleShowInput = (columnId: string) => {
+    setActiveInputColumn(columnId);
   };
 
   // Handle input change
-  const handleInputChange = (priority: TaskPriority, value: string) => {
+  const handleInputChange = (columnId: string, value: string) => {
     setNewTaskInputs(prev => ({
       ...prev,
-      [priority]: value
+      [columnId]: value
     }));
   };
 
   // Handle creating a new task
-  const handleCreateTask = async (priority: TaskPriority) => {
-    const title = newTaskInputs[priority].trim();
+  const handleCreateTask = async (columnId: string) => {
+    const title = newTaskInputs[columnId].trim();
     if (!title) return;
 
     if (!currentProject) {
@@ -162,11 +211,21 @@ const KanbanView: React.FC = () => {
     try {
       console.log('🎯 Creating CREATE command for Kanban quick-add:', title);
 
+      // Determine priority and status based on grouping mode
+      let priority: TaskPriority = 'low';
+      let status: TaskStatus = 'not started';
+
+      if (kanbanGroupBy === 'priority') {
+        priority = columnId as TaskPriority;
+      } else {
+        status = columnId as TaskStatus;
+      }
+
       const command = createTaskCommand({
         projectId: currentProject.id,
         title,
         description: '',
-        status: 'not started',
+        status,
         priority,
         customFields: {}
       });
@@ -177,7 +236,7 @@ const KanbanView: React.FC = () => {
       // Reset the input on success
       setNewTaskInputs(prev => ({
         ...prev,
-        [priority]: ''
+        [columnId]: ''
       }));
       setActiveInputColumn(null);
     } catch (error) {
@@ -191,27 +250,39 @@ const KanbanView: React.FC = () => {
   };
 
   // Handle key press events (Enter to submit, Escape to cancel)
-  const handleKeyDown = (e: React.KeyboardEvent, priority: TaskPriority) => {
+  const handleKeyDown = (e: React.KeyboardEvent, columnId: string) => {
     if (e.key === 'Enter') {
-      handleCreateTask(priority);
+      handleCreateTask(columnId);
     } else if (e.key === 'Escape') {
       handleCancelTask();
     }
   };
 
-  // Get priority color class
-  const getPriorityColorClass = (priority: TaskPriority): string => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-100 border-red-500';
-      case 'high': return 'bg-orange-100 border-orange-500';
-      case 'medium': return 'bg-yellow-100 border-yellow-500';
-      case 'low': return 'bg-green-100 border-green-500';
+  // Get column color class
+  const getColumnColorClass = (columnId: string): string => {
+    if (kanbanGroupBy === 'priority') {
+      const priority = columnId as TaskPriority;
+      switch (priority) {
+        case 'urgent': return 'bg-red-100 border-red-500';
+        case 'high': return 'bg-orange-100 border-orange-500';
+        case 'medium': return 'bg-yellow-100 border-yellow-500';
+        case 'low': return 'bg-green-100 border-green-500';
+      }
+    } else {
+      const status = columnId as TaskStatus;
+      switch (status) {
+        case 'not started': return 'bg-gray-100 border-gray-500';
+        case 'in progress': return 'bg-blue-100 border-blue-500';
+        case 'completed': return 'bg-green-100 border-green-500';
+      }
     }
   };
 
-  // Get formatted priority name
-  const getPriorityName = (priority: TaskPriority): string => {
-    return priority.charAt(0).toUpperCase() + priority.slice(1);
+  // Get formatted column name
+  const getColumnName = (columnId: string): string => {
+    return columnId.split(' ').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
   };
 
   // Get status badge class
@@ -259,21 +330,21 @@ const KanbanView: React.FC = () => {
         >
 
           <div className="flex h-full gap-3 px-2 justify-center min-w-full" style={{ minWidth: 'max-content' }}>
-            {Object.entries(tasksByPriority).map(([priority, priorityTasks]) => (
+            {Object.entries(taskGroups).map(([columnId, columnTasks]) => (
               <div
-                key={priority}
-                className={`flex-shrink-0 w-72 rounded-lg border-t-4 h-full ${getPriorityColorClass(priority as TaskPriority)}`}
+                key={columnId}
+                className={`flex-shrink-0 w-72 rounded-lg border-t-4 h-full ${getColumnColorClass(columnId)}`}
               >
                 <div className="bg-white rounded-b-lg shadow h-full flex flex-col">
                   {/* Column header */}
                   <div className="p-3 border-b bg-gray-50 flex-shrink-0">
                     <h3 className="font-semibold text-gray-800 text-sm">
-                      {getPriorityName(priority as TaskPriority)} ({priorityTasks.length})
+                      {getColumnName(columnId)} ({columnTasks.length})
                     </h3>
                   </div>
 
                   {/* Scrollable tasks area */}
-                  <Droppable droppableId={priority}>
+                  <Droppable droppableId={columnId}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
@@ -282,7 +353,7 @@ const KanbanView: React.FC = () => {
                           }`}
                         style={{ minHeight: '200px' }}
                       >
-                        {priorityTasks.length === 0 ? (
+                        {columnTasks.length === 0 ? (
                           <div className="flex items-center justify-center h-32">
                             <p className="text-gray-400 text-sm text-center">
                               No tasks
@@ -290,7 +361,7 @@ const KanbanView: React.FC = () => {
                           </div>
                         ) : (
                           <div className="space-y-2">
-                            {priorityTasks.map((task, index) => (
+                            {columnTasks.map((task: Task, index: number) => (
                               <Draggable
                                 key={task.id}
                                 draggableId={task.id}
@@ -371,15 +442,15 @@ const KanbanView: React.FC = () => {
 
                   {/* Add Task Button - Fixed at bottom */}
                   <div className="px-2 py-1.5 border-t bg-gray-50 flex-shrink-0">
-                    {activeInputColumn === priority as TaskPriority ? (
+                    {activeInputColumn === columnId ? (
                       <div
-                        ref={(el) => createTaskRefs.current[priority as TaskPriority] = el}
+                        ref={(el) => createTaskRefs.current[columnId] = el}
                         className="bg-white rounded-lg p-2"
                       >
                         <textarea
-                          value={newTaskInputs[priority as TaskPriority]}
-                          onChange={(e) => handleInputChange(priority as TaskPriority, e.target.value)}
-                          onKeyDown={(e) => handleKeyDown(e, priority as TaskPriority)}
+                          value={newTaskInputs[columnId]}
+                          onChange={(e) => handleInputChange(columnId, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, columnId)}
                           placeholder="Enter task title..."
                           className="w-full p-2 text-sm border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           rows={2}
@@ -387,7 +458,7 @@ const KanbanView: React.FC = () => {
                         />
                         <div className="flex justify-between mt-2">
                           <button
-                            onClick={() => handleCreateTask(priority as TaskPriority)}
+                            onClick={() => handleCreateTask(columnId)}
                             className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
                           >
                             Add Task
@@ -403,7 +474,7 @@ const KanbanView: React.FC = () => {
                     ) : (
                       <WriteGuard>
                         <button
-                          onClick={() => handleShowInput(priority as TaskPriority)}
+                          onClick={() => handleShowInput(columnId)}
                           className="w-full py-1.5 px-2 text-blue-600 hover:bg-blue-50 rounded text-sm flex items-center justify-center border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors"
                         >
                           <span className="text-base mr-1">+</span> Add task

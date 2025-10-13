@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+BACKEND_CHANGES_NEEDED.md
 
 # Editor directories and files
 .vscode/*

@@ -86,6 +86,21 @@ const taskService = {
     return response.data;
   },
 
+  // Update task status with version support
+  updateTaskStatus: async (
+    projectId: string,
+    taskId: string,
+    status: TaskStatus,
+    destinationIndex?: number,
+    version?: number
+  ): Promise<Task> => {
+    const response = await api.patch(`/projects/${projectId}/tasks/${taskId}/status`, {
+      status,
+      destinationIndex,
+      ...(version && { version })
+    });
+    return response.data;
+  },
 
   // Delete a task
   deleteTask: async (projectId: string, taskId: string): Promise<void> => {
@@ -109,7 +124,25 @@ const taskService = {
     }));
 
     await api.put(`/projects/${projectId}/tasks/reorder`, {
-      tasks // Send the transformed data structure
+      tasks,
+      groupBy: 'priority' // Specify grouping type
+    });
+  },
+
+  // Reorder tasks within a status column
+  reorderTasksByStatus: async (
+    projectId: string,
+    status: TaskStatus,
+    taskIds: string[]
+  ): Promise<void> => {
+    const tasks = taskIds.map((id, index) => ({
+      id,
+      statusPosition: index
+    }));
+
+    await api.put(`/projects/${projectId}/tasks/reorder`, {
+      tasks,
+      groupBy: 'status' // Specify grouping type
     });
   },
 

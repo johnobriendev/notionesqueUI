@@ -31,7 +31,8 @@ export interface Task {
     description: string | null;
     status: TaskStatus;
     priority: TaskPriority;
-    position: number;
+    position: number; // Position within priority group
+    statusPosition: number; // Position within status group
     createdAt: string;
     updatedAt: string;
     customFields: Record<string, string | number | boolean>;
@@ -107,6 +108,8 @@ export interface TaskConflict {
 
 export type ViewMode = 'list' | 'kanban';
 
+export type KanbanGroupBy = 'priority' | 'status';
+
 export type SortField = 'title' | 'status' | 'priority' | 'createdAt'| 'updatedAt';
 
 export type SortDirection = 'asc' | 'desc';
@@ -169,6 +172,7 @@ export interface CollaborationState {
 // UI state structure with collaboration modals
 export interface UiState {
   viewMode: ViewMode;
+  kanbanGroupBy: KanbanGroupBy;
   sortConfig: SortConfig;
   filterConfig: FilterConfig;
   isTaskModalOpen: boolean;

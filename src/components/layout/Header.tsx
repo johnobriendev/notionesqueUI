@@ -4,12 +4,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
   setViewMode,
+  setKanbanGroupBy,
   openTaskModal,
   setSearchTerm,
   setFilterStatus,
   setFilterPriority
 } from '../../features/ui/store/uiSlice';
-import { ViewMode, TaskStatus, TaskPriority } from '../../types';
+import { ViewMode, KanbanGroupBy, TaskStatus, TaskPriority } from '../../types';
 import HistoryControls from '../../features/ui/components/HistoryControls';
 import { useAuth0 } from '@auth0/auth0-react';
 import { openTeamModal } from '../../features/ui/store/uiSlice';
@@ -26,6 +27,7 @@ const Header: React.FC<HeaderProps> = (props) => {
   const { showBackButton = false, projectName } = props;
   const dispatch = useAppDispatch();
   const viewMode = useAppSelector(state => state.ui.viewMode);
+  const kanbanGroupBy = useAppSelector(state => state.ui.kanbanGroupBy);
   const filterConfig = useAppSelector(state => state.ui.filterConfig);
   const { user, logout, isAuthenticated } = useAuth0();
 
@@ -71,6 +73,10 @@ const Header: React.FC<HeaderProps> = (props) => {
 
   const handleViewModeChange = (mode: ViewMode) => {
     dispatch(setViewMode(mode));
+  };
+
+  const handleKanbanGroupByChange = (groupBy: KanbanGroupBy) => {
+    dispatch(setKanbanGroupBy(groupBy));
   };
 
   const handleCreateTask = () => {
@@ -190,7 +196,7 @@ const Header: React.FC<HeaderProps> = (props) => {
             </div>
 
             {/* View Mode Toggle - Tablet and up */}
-            <div className="hidden md:flex items-center">
+            <div className="hidden md:flex items-center gap-2">
               <div className="flex bg-gray-100 rounded-md p-1">
                 <button
                   onClick={() => handleViewModeChange('list')}
@@ -211,6 +217,32 @@ const Header: React.FC<HeaderProps> = (props) => {
                   Board
                 </button>
               </div>
+
+              {/* Kanban Group By Toggle - Only show when in kanban view */}
+              {viewMode === 'kanban' && (
+                <div className="flex bg-gray-100 rounded-md p-1">
+                  <button
+                    onClick={() => handleKanbanGroupByChange('priority')}
+                    className={`px-2 py-1 text-xs rounded transition-colors ${kanbanGroupBy === 'priority'
+                        ? 'bg-white text-gray-800 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    title="Group by Priority"
+                  >
+                    Priority
+                  </button>
+                  <button
+                    onClick={() => handleKanbanGroupByChange('status')}
+                    className={`px-2 py-1 text-xs rounded transition-colors ${kanbanGroupBy === 'status'
+                        ? 'bg-white text-gray-800 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    title="Group by Status"
+                  >
+                    Status
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Menu button for overflow items on laptop */}
@@ -385,6 +417,39 @@ const Header: React.FC<HeaderProps> = (props) => {
                     Board View
                   </button>
                 </div>
+
+                {/* Kanban Group By Toggle - Only show when in kanban view */}
+                {viewMode === 'kanban' && (
+                  <div className="mt-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Group By</label>
+                    <div className="flex bg-gray-100 rounded-md p-1">
+                      <button
+                        onClick={() => {
+                          handleKanbanGroupByChange('priority');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${kanbanGroupBy === 'priority'
+                            ? 'bg-white text-gray-800 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-800'
+                          }`}
+                      >
+                        Priority
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleKanbanGroupByChange('status');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${kanbanGroupBy === 'status'
+                            ? 'bg-white text-gray-800 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-800'
+                          }`}
+                      >
+                        Status
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* History Controls for mobile/tablet */}

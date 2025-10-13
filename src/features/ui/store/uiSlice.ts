@@ -3,6 +3,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   ViewMode,
+  KanbanGroupBy,
   SortField,
   SortDirection,
   SortConfig,
@@ -18,6 +19,7 @@ import {
 // Initial state when the application loads
 const initialState: UiState = {
   viewMode: 'list',
+  kanbanGroupBy: 'priority',
   sortConfig: {
     field: 'createdAt',
     direction: 'desc',
@@ -56,6 +58,11 @@ export const uiSlice = createSlice({
     setViewMode: (state, action: PayloadAction<ViewMode>) => {
       state.viewMode = action.payload;
 
+    },
+
+    // Set kanban grouping mode (by priority or status)
+    setKanbanGroupBy: (state, action: PayloadAction<KanbanGroupBy>) => {
+      state.kanbanGroupBy = action.payload;
     },
 
     // Update the sort configuration
@@ -183,6 +190,7 @@ export const uiSlice = createSlice({
 // Export the actions
 export const {
   setViewMode,
+  setKanbanGroupBy,
   setCurrentProjectId,
   setSortConfig,
   setFilterStatus,
@@ -209,6 +217,7 @@ export default uiSlice.reducer;
 
 // Selectors
 export const selectViewMode = (state: { ui: UiState }) => state.ui.viewMode;
+export const selectKanbanGroupBy = (state: { ui: UiState }) => state.ui.kanbanGroupBy;
 export const selectCurrentProjectId = (state: { ui: UiState }) => state.ui.currentProjectId;
 export const selectSortConfig = (state: { ui: UiState }) => state.ui.sortConfig;
 export const selectFilterConfig = (state: { ui: UiState }) => state.ui.filterConfig;
