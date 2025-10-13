@@ -28,7 +28,7 @@ const TaskModal: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState<string>('');
   const [status, setStatus] = useState<TaskStatus>('not started');
-  const [priority, setPriority] = useState<TaskPriority>('none');
+  const [priority, setPriority] = useState<TaskPriority>('low');
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +65,7 @@ const TaskModal: React.FC = () => {
         setTitle('');
         setDescription('');
         setStatus('not started');
-        setPriority('none');
+        setPriority('low');
         setCustomFields({});
         setShowCustomFields(false);
       }
@@ -247,7 +247,6 @@ const TaskModal: React.FC = () => {
                 onChange={(e) => setPriority(e.target.value as TaskPriority)}
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="none">None</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>

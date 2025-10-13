@@ -87,7 +87,7 @@ export const createTaskCommand = (data: CreateTaskData): UndoableCommand => {
         title: data.title,
         description: data.description,
         status: data.status || 'not started',
-        priority: data.priority || 'none',
+        priority: data.priority || 'low',
         position: data.position,
         customFields: data.customFields || {}
       })).unwrap();

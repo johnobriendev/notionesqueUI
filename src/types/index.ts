@@ -2,7 +2,7 @@
 
 export type TaskStatus = 'not started' | 'in progress' | 'completed';
 
-export type TaskPriority = 'none' | 'low' | 'medium' | 'high' | 'urgent';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 // User roles for collaboration
 export type UserRole = 'owner' | 'editor' | 'viewer';

@@ -172,7 +172,6 @@ const Header: React.FC<HeaderProps> = (props) => {
                 className="h-8 px-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
               >
                 <option value="all">Priority</option>
-                <option value="none">None</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
@@ -420,7 +419,6 @@ const Header: React.FC<HeaderProps> = (props) => {
                     className="w-full h-8 px-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="all">All Priorities</option>
-                    <option value="none">None</option>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>

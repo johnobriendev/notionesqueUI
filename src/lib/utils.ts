@@ -94,8 +94,8 @@ export const getWelcomeTasks = () => {
       title: '👋 Welcome to Notionesque!',
       description: 'This is your new task management app. Here are a few tips to get you started:\n\n• Tasks can be organized by priority (columns) and status\n• Drag tasks between columns to change priority\n• Drag within a column to reorder tasks\n• Click on a task to view details',
       status: 'not started' as TaskStatus,
-      priority: 'none' as TaskPriority,
-      projectId: 'default', 
+      priority: 'low' as TaskPriority,
+      projectId: 'default',
       customFields: {} as Record<string, string | number | boolean>
     },
   ];

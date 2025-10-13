@@ -88,7 +88,7 @@ yarn dev
    * Title (required)
    * Description (optional)
    * Status (Not Started, In Progress, Completed)
-   * Priority (None, Low, Medium, High, Urgent)
+   * Priority (Low, Medium, High, Urgent)
    * Custom Fields (optional)
 3. Click "Create" to add the task
 

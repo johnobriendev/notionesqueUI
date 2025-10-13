@@ -19,7 +19,6 @@ const KanbanView: React.FC = () => {
 
   // State for quick add task inputs in each column
   const [newTaskInputs, setNewTaskInputs] = useState<Record<TaskPriority, string>>({
-    none: '',
     low: '',
     medium: '',
     high: '',
@@ -31,7 +30,6 @@ const KanbanView: React.FC = () => {
 
   // Ref for click outside detection
   const createTaskRefs = useRef<Record<TaskPriority, HTMLDivElement | null>>({
-    none: null,
     low: null,
     medium: null,
     high: null,
@@ -208,7 +206,6 @@ const KanbanView: React.FC = () => {
       case 'high': return 'bg-orange-100 border-orange-500';
       case 'medium': return 'bg-yellow-100 border-yellow-500';
       case 'low': return 'bg-green-100 border-green-500';
-      default: return 'bg-gray-100 border-gray-400';
     }
   };
 

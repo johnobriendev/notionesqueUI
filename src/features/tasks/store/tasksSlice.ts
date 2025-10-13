@@ -47,7 +47,7 @@ export const createTaskAsync = createAsyncThunk(
       const tasks = state.tasks.items;
 
       const tasksWithSamePriority = tasks.filter(
-        t => t.priority === (task.priority || 'none') && t.projectId === task.projectId
+        t => t.priority === (task.priority || 'low') && t.projectId === task.projectId
       );
 
       const position = task.position ?? (tasksWithSamePriority.length
@@ -60,7 +60,7 @@ export const createTaskAsync = createAsyncThunk(
         title: task.title,
         description: task.description,
         status: task.status || 'not started',
-        priority: task.priority || 'none',
+        priority: task.priority || 'low',
         position,
         customFields: task.customFields,
         ...(task.taskId && { id: task.taskId })
@@ -545,7 +545,7 @@ export const selectSortedFilteredTasks = createSelector(
 export const selectTasksByPriority = createSelector(
   [selectFilteredTasks],
   (tasks: Task[]) => {
-    const priorities: TaskPriority[] = ['none', 'low', 'medium', 'high', 'urgent'];
+    const priorities: TaskPriority[] = ['low', 'medium', 'high', 'urgent'];
 
     return priorities.reduce((acc, priority) => {
       const priorityTasks = tasks

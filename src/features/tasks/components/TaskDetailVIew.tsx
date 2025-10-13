@@ -130,7 +130,7 @@ const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClose }) => {
                 {task.status}
               </span>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityBadgeClass(task.priority)}`}>
-                {task.priority !== 'none' ? task.priority : 'No priority'}
+                {task.priority}
               </span>
             </div>
             
