@@ -2,7 +2,28 @@
 
 A powerful task management application built with React, Redux, TypeScript, and Tailwind CSS. This application provides a comprehensive set of features for managing tasks with advanced capabilities similar to a simplified Notion database.
 
-Live Site: [Esque](https://esque.click/) 
+**Live Site:** [esque.click](https://esque.click/)
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage Guide](#usage-guide)
+  - [Creating Tasks](#creating-tasks)
+  - [Managing Tasks](#managing-tasks)
+  - [Using Views](#using-views)
+  - [Filtering and Searching](#filtering-and-searching)
+  - [Undo/Redo](#undoredo)
+- [Project Structure](#project-structure)
+- [Customization](#customization)
+- [License](#license)
+
+---
 
 ## Features
 
