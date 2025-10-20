@@ -1,6 +1,6 @@
 // src/features/tasks/store/tasksSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
-import { Task, TaskStatus, TaskPriority } from '../../../types';
+import { Task, TaskStatus, TaskPriority, UrgentTaskWithProject } from '../../../types';
 import taskService from '../services/taskService';
 
 
@@ -8,13 +8,19 @@ interface TasksState {
   items: Task[];
   isLoading: boolean;
   error: string | null;
+  urgentTasks: UrgentTaskWithProject[];
+  isLoadingUrgentTasks: boolean;
+  urgentTasksError: string | null;
 }
 
 // Clean initial state
 const initialState: TasksState = {
   items: [],
   isLoading: false,
-  error: null
+  error: null,
+  urgentTasks: [],
+  isLoadingUrgentTasks: false,
+  urgentTasksError: null
 };
 
 // Async thunks for API operations
@@ -308,6 +314,18 @@ export const reorderTasksByStatusAsync = createAsyncThunk(
       };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to reorder tasks by status');
+    }
+  }
+);
+
+// Fetch urgent tasks across all user's projects
+export const fetchUrgentTasks = createAsyncThunk(
+  'tasks/fetchUrgentTasks',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await taskService.getUrgentTasks();
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch urgent tasks');
     }
   }
 );
@@ -607,6 +625,20 @@ export const tasksSlice = createSlice({
       .addCase(deleteTasksAsync.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string || 'Failed to delete tasks';
+      })
+
+      // Fetch urgent tasks
+      .addCase(fetchUrgentTasks.pending, (state) => {
+        state.isLoadingUrgentTasks = true;
+        state.urgentTasksError = null;
+      })
+      .addCase(fetchUrgentTasks.fulfilled, (state, action) => {
+        state.isLoadingUrgentTasks = false;
+        state.urgentTasks = action.payload;
+      })
+      .addCase(fetchUrgentTasks.rejected, (state, action) => {
+        state.isLoadingUrgentTasks = false;
+        state.urgentTasksError = action.payload as string || 'Failed to fetch urgent tasks';
       });
   }
 });
@@ -722,3 +754,8 @@ export const selectTasksByStatus = createSelector(
 // Simple loading and error selectors
 export const selectTasksLoading = (state: any) => state.tasks.isLoading;
 export const selectTasksError = (state: any) => state.tasks.error;
+
+// Urgent tasks selectors
+export const selectUrgentTasks = (state: any) => state.tasks.urgentTasks;
+export const selectUrgentTasksLoading = (state: any) => state.tasks.isLoadingUrgentTasks;
+export const selectUrgentTasksError = (state: any) => state.tasks.urgentTasksError;

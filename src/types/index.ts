@@ -41,6 +41,15 @@ export interface Task {
     updatedBy: string; // Email of user who last updated this task
 }
 
+// Urgent task with project information (for cross-project urgent tasks view)
+export interface UrgentTaskWithProject extends Task {
+  project: {
+    id: string;
+    name: string;
+    description: string;
+  };
+}
+
 export interface User {
   id: string;
   email: string;
@@ -132,6 +141,10 @@ export interface TasksState {
   error: string | null;
   // Conflict tracking
   conflicts: TaskConflict[];
+  // Urgent tasks across all projects
+  urgentTasks: UrgentTaskWithProject[];
+  isLoadingUrgentTasks: boolean;
+  urgentTasksError: string | null;
 }
 
 // ProjectsState for managing projects
@@ -199,6 +212,9 @@ export interface UiState {
   // Comments UI state
   isDeleteCommentModalOpen: boolean;
   deletingCommentId: string | null;
+
+  // Urgent tasks modal
+  isUrgentTasksModalOpen: boolean;
 }
 
 export interface CommandHistoryState {

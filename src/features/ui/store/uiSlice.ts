@@ -47,6 +47,7 @@ const initialState: UiState = {
   conflictBannerVisible: false,
   isDeleteCommentModalOpen: false,
   deletingCommentId: null,
+  isUrgentTasksModalOpen: false,
 };
 
 // Create the slice with reducers
@@ -184,6 +185,14 @@ export const uiSlice = createSlice({
       state.deletingCommentId = null;
     },
 
+    // Urgent tasks modal
+    openUrgentTasksModal: (state) => {
+      state.isUrgentTasksModalOpen = true;
+    },
+    closeUrgentTasksModal: (state) => {
+      state.isUrgentTasksModalOpen = false;
+    },
+
   }
 });
 
@@ -210,6 +219,8 @@ export const {
   closeInvitationsPanel,
   openDeleteCommentModal,
   closeDeleteCommentModal,
+  openUrgentTasksModal,
+  closeUrgentTasksModal,
 } = uiSlice.actions;
 
 // Export the reducer
@@ -232,3 +243,4 @@ export const selectBulkEditType = (state: { ui: UiState }) => state.ui.bulkEditT
 export const selectSelectedTaskIds = (state: { ui: UiState }) => state.ui.selectedTaskIds;
 export const selectIsTeamModalOpen = (state: { ui: UiState }) => state.ui.isTeamModalOpen;
 export const selectIsInvitationsPanelOpen = (state: { ui: UiState }) => state.ui.isInvitationsPanelOpen;
+export const selectIsUrgentTasksModalOpen = (state: { ui: UiState }) => state.ui.isUrgentTasksModalOpen;

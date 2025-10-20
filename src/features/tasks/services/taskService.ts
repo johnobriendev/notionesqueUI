@@ -1,7 +1,7 @@
 //src/services/taskService.ts
 
 import api from '../../../lib/api';
-import { Task, TaskStatus, TaskPriority } from '../../../types';
+import { Task, TaskStatus, TaskPriority, UrgentTaskWithProject } from '../../../types';
 
 // Types for API requests
 interface CreateTaskRequest {
@@ -156,6 +156,12 @@ const taskService = {
 
   ): Promise<void> => {
     await api.put(`/projects/${projectId}/tasks/bulk`, data);
+  },
+
+  // Get all urgent tasks across all user's projects
+  getUrgentTasks: async (): Promise<UrgentTaskWithProject[]> => {
+    const response = await api.get('/tasks/urgent');
+    return response.data;
   }
 };
 

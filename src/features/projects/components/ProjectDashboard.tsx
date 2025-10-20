@@ -11,7 +11,7 @@ import {
   updateProject,
   deleteProject,
 } from '../store/projectsSlice';
-import { setCurrentProjectId } from '../../ui/store/uiSlice';
+import { setCurrentProjectId, openUrgentTasksModal } from '../../ui/store/uiSlice';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { Project } from '../../../types';
@@ -19,6 +19,7 @@ import DashboardHeader from '../../../components/layout/DashboardHeader';
 import { useAppAuth } from '../../../auth/AuthProvider';
 import { getProjectPermissions } from '../../../lib/permissions';
 import ProjectDeleteConfirmModal from '../../../components/modals/ProjectDeleteConfirmModal';
+import UrgentTasksModal from '../../tasks/components/UrgentTasksModal';
 
 
 
@@ -284,15 +285,26 @@ const ProjectDashboard: React.FC = () => {
             </div>
 
             {!isCreating && !isEditing && (
-              <button
-                onClick={handleOpenCreateForm}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow flex items-center justify-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Create Project
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => dispatch(openUrgentTasksModal())}
+                  className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm hover:shadow flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Urgent Tasks
+                </button>
+                <button
+                  onClick={handleOpenCreateForm}
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Create Project
+                </button>
+              </div>
             )}
           </div>
 
@@ -469,6 +481,9 @@ const ProjectDashboard: React.FC = () => {
         onClose={handleCloseDeleteModal}
         onConfirm={confirmDeleteProject}
       />
+
+      {/* Urgent Tasks Modal */}
+      <UrgentTasksModal />
     </>
   );
 };
