@@ -1,26 +1,24 @@
 # Esque
 
-A powerful task management application built with React, Redux, TypeScript, and Tailwind CSS. This application provides a comprehensive set of features for managing tasks with advanced capabilities similar to a simplified Notion database.
+A powerful task management application built with React, Redux, TypeScript, and Tailwind CSS. Manage your tasks with advanced capabilities similar to a simplified Notion database, featuring multiple view modes, drag-and-drop functionality, and full undo/redo support.
 
-**Live Site:** [esque.click](https://esque.click/)
+**🚀 Live Application:** [esque.click](https://esque.click/)
 
 ---
 
 ## Table of Contents
 
 - [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage Guide](#usage-guide)
+- [How to Use](#how-to-use)
   - [Creating Tasks](#creating-tasks)
   - [Managing Tasks](#managing-tasks)
   - [Using Views](#using-views)
   - [Filtering and Searching](#filtering-and-searching)
   - [Undo/Redo](#undoredo)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
 - [Project Structure](#project-structure)
-- [Customization](#customization)
+- [Local Development](#local-development)
 - [License](#license)
 
 ---
@@ -56,86 +54,91 @@ A powerful task management application built with React, Redux, TypeScript, and 
 * Automatic local storage saving
 * Undo/redo functionality for all actions
 
+---
+
 ## Tech Stack
 
-* **React**: UI library for building the interface
-* **TypeScript**: Static typing for better development experience
-* **Redux Toolkit**: State management with advanced features
-* **Redux-Undo**: Undo/redo capabilities
-* **Redux-Persist**: Local storage persistence
-* **@hello-pangea/dnd**: Drag-and-drop functionality
-* **Tailwind CSS**: Utility-first CSS framework
+| Technology | Purpose |
+|------------|---------|
+| **React** | UI library for building the interface |
+| **TypeScript** | Static typing for better development experience |
+| **Redux Toolkit** | State management with advanced features |
+| **Redux-Persist** | Local storage persistence |
+| **Auth0** | Authentication and user management |
+| **React Router** | Client-side routing |
+| **Axios** | HTTP client for API requests |
+| **@hello-pangea/dnd** | Drag-and-drop functionality |
+| **Tailwind CSS** | Utility-first CSS framework |
+| **Vite** | Build tool and development server |
 
-## Getting Started
+---
 
-### Prerequisites
+## Architecture
 
-* Node.js (v14 or newer)
-* npm or yarn
+This project demonstrates several advanced architectural patterns and best practices:
 
-### Installation
+**Custom Command Pattern**
+- Implemented a custom Command Pattern for managing undo/redo functionality
+- Provides robust state management with full action history
+- All operations (create, edit, delete, priority changes) are fully reversible
 
-1. Clone the repository
+**Feature-Based Organization**
+- Code organized by feature rather than file type
+- Each feature contains its own components, hooks, services, and state management
+- Promotes modularity and maintainability
 
-```bash
-git clone https://github.com/johnobriendev/notionesque.git
-cd notionesque
-```
+**State Management**
+- Redux Toolkit for centralized state management
+- Redux async thunks for handling asynchronous operations
+- Redux-Persist for selective state persistence
+- Optimized selectors for performance
 
-2. Install dependencies
+**Type Safety**
+- Full TypeScript implementation throughout the codebase
+- Strongly typed Redux store and actions
+- Type-safe API calls and component props
 
-```bash
-npm install
-# or
-yarn
-```
+---
 
-3. Start the development server
+## How to Use
 
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-4. Open your browser to http://localhost:5173
-
-## Usage Guide
+Visit [esque.click](https://esque.click/) to start using the application. No installation required!
 
 ### Creating Tasks
 
-1. Click the "Create Task" button in the header
+1. Click the **"Create Task"** button in the header
 2. Fill in the task details:
-   * Title (required)
-   * Description (optional)
-   * Status (Not Started, In Progress, Completed)
-   * Priority (Low, Medium, High, Urgent)
-   * Custom Fields (optional)
-3. Click "Create" to add the task
+   - **Title** (required)
+   - **Description** (optional)
+   - **Status** (Not Started, In Progress, Completed)
+   - **Priority** (Low, Medium, High, Urgent)
+   - **Custom Fields** (optional)
+3. Click **"Create"** to add the task
 
 ### Managing Tasks
 
-<!-- * **View Task Details**: Click on a task's title to view all details -->
-* **Edit a Task**: Click the "Edit" button on a task card or in the detail view
-* **Delete a Task**: Click the "Delete" button on a task card or in the detail view
-* **Bulk Actions**: Select multiple tasks in list view to perform actions on them
+- **Edit a Task** - Click the "Edit" button on a task card or in the detail view
+- **Delete a Task** - Click the "Delete" button on a task card or in the detail view
+- **Bulk Actions** - Select multiple tasks in list view to perform actions on them
 
 ### Using Views
 
-* Toggle between List and Kanban views using the buttons in the header
-* **List View**: Sort by clicking column headers, paginate with controls at the bottom
-* **Kanban View**: Drag tasks between priority columns to change their priority
+- Toggle between **List** and **Kanban** views using the buttons in the header
+- **List View** - Sort by clicking column headers, paginate with controls at the bottom
+- **Kanban View** - Drag tasks between priority columns to change their priority
 
 ### Filtering and Searching
 
-* Use the search box to find tasks by title
-* Use the Status and Priority dropdowns to filter tasks
-* Filters work in both List and Kanban views
+- Use the **search box** to find tasks by title
+- Use the **Status** and **Priority** dropdowns to filter tasks
+- Filters work in both List and Kanban views
 
 ### Undo/Redo
 
-* Use the undo and redo buttons in the header to revert or restore changes
-* All actions (create, edit, delete, priority changes) can be undone
+- Use the **undo** and **redo** buttons in the header to revert or restore changes
+- All actions (create, edit, delete, priority changes) can be undone
+
+---
 
 ## Project Structure
 
@@ -204,20 +207,52 @@ src/
 └── vite-env.d.ts           # Vite environment types
 ```
 
-## Customization
+---
 
-### Adding New Task Statuses
+## Local Development
 
-1. Update the TaskStatus type in src/types/index.ts
-2. Add the new status to the dropdown in TaskModal.tsx
-3. Add styling for the new status in the list and kanban views
+Want to run this project locally or contribute? Follow these steps:
 
-### Adding New Priority Levels
+### Prerequisites
 
-1. Update the TaskPriority type in src/types/index.ts
-2. Add the new priority to the dropdown in TaskModal.tsx
-3. Add a new column in the KanbanView.tsx for the new priority level
-4. Add styling for the new priority in both views
+- Node.js (v14 or newer)
+- npm or yarn
+
+### Setup
+
+**1. Clone the repository**
+
+```bash
+git clone https://github.com/johnobriendev/notionesque.git
+cd notionesque
+```
+
+**2. Install dependencies**
+
+```bash
+npm install
+```
+
+**3. Start the development server**
+
+```bash
+npm run dev
+```
+
+**4. Open your browser**
+
+Navigate to `http://localhost:5173`
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run test` - Run tests
+- `npm run lint` - Lint code
+- `npm run format` - Format code with Prettier
+
+---
 
 ## License
 
